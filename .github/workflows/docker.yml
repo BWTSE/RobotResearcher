@@ -1,10 +1,10 @@
 name: Publish Docker images
 on:
   push:
-    branches: [ master ]
+    tags: [ 'v**' ]
   workflow_dispatch:
 jobs:
-  build-and-publish:
+  build-and-publish-backend:
     name: Push Docker image to GitHub Packages
     runs-on: ubuntu-latest
     steps:
@@ -19,3 +19,18 @@ jobs:
           repository: brokenwindowsinvestigation/robotresearcher/backend
           tag_with_ref: true
           path: .
+  build-and-publish-frontend:
+    name: Push Docker image to GitHub Packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+      - name: Push to GitHub Packages
+        uses: docker/build-push-action@v1
+        with:
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          registry: docker.pkg.github.com
+          repository: brokenwindowsinvestigation/robotresearcher/frontend
+          tag_with_ref: true
+          path: ./web
