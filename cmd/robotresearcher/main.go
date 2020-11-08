@@ -21,7 +21,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = r.Serve(true, "8080")
+	err = r.Serve(true, "8000")
 	if err != nil {
 		fmt.Println(fmt.Errorf("while serving router: %w", err))
 		os.Exit(1)

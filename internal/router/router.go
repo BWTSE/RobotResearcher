@@ -28,13 +28,17 @@ func (r *Router) Serve(debug bool, port string) error {
 	e.Use(gin.Logger())
 	e.Use(gin.Recovery())
 
-	e.GET("/ping", func(c *gin.Context) {
+	api := e.Group("/api")
+
+	api.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",
 		})
 	})
 
-	r.applyCodeRoutes(e.Group("code"))
+	r.applyCodeRoutes(api.Group("/code"))
+	r.applyAuthRoutes(api.Group("/auth"))
+	r.applyAgreementRoutes(api.Group("/agreement"))
 
 	return e.Run("0.0.0.0:" + port)
 }
