@@ -3,16 +3,20 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
+	"sidus.io/robotresearcher/internal/database"
+
 	"sidus.io/robotresearcher/internal/code"
 )
 
 type Router struct {
 	codeService *code.CodeService
+	database    *database.Database
 }
 
-func NewRouter(codeService *code.CodeService) (*Router, error) {
+func NewRouter(codeService *code.CodeService, database *database.Database) (*Router, error) {
 	return &Router{
 		codeService: codeService,
+		database:    database,
 	}, nil
 }
 

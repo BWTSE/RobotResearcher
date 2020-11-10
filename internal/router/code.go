@@ -10,6 +10,8 @@ import (
 )
 
 func (r *Router) applyCodeRoutes(rg *gin.RouterGroup) {
+	rg.Use(r.authMiddleware)
+
 	rg.POST("/run", func(c *gin.Context) {
 		code, err := c.GetRawData()
 		if err != nil {
