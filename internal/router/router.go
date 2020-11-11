@@ -43,6 +43,8 @@ func (r *Router) Serve(debug bool, port string) error {
 	r.applyCodeRoutes(api.Group("/code"))
 	r.applyAuthRoutes(api.Group("/auth"))
 	r.applyAgreementRoutes(api.Group("/agreement"))
+	r.applyScenarioRoutes(api.Group("/scenario"))
+	r.applySurveyRoutes(api.Group("/survey"))
 
 	return e.Run("0.0.0.0:" + port)
 }

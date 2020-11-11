@@ -1,10 +1,12 @@
 package router
 
 import (
+	"encoding/base64"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 
 	"sidus.io/robotresearcher/internal/database"
@@ -13,31 +15,48 @@ import (
 func (r *Router) authMiddleware(c *gin.Context) {
 	id := c.GetHeader("Authorization")
 	if id == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": "no id token",
 		})
 
 		return
 	}
 
-	session, err := r.database.GetSession(id)
+	oid, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "invalid id hex",
+		})
+
+		return
+	}
+
+	session, err := r.database.GetSession(oid)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			c.JSON(http.StatusUnauthorized, gin.H{
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "invalid id token",
 			})
 		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err,
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
 			})
 		}
 
 		return
 	}
 
-	if session.EndedAt.Before(time.Now()) {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "session ended",
+	if !session.EndedAt.IsZero() {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "session canceled",
+		})
+
+		return
+	}
+
+	if session.StartedAt.Before(time.Now().Add(-10 * time.Hour)) {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "session expired",
 		})
 
 		return
@@ -54,30 +73,82 @@ func getSession(c *gin.Context) database.Session {
 
 func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 	rg.POST("/register", func(c *gin.Context) {
-		id, err := r.database.CreateSession(database.Session{
-			RegisterCode: "",  //todo
-			Scenarios:    nil, //todo
-			StartedAt:    time.Now(),
-			EndedAt:      time.Now().Add(2 * time.Hour), //TODO
-		})
+		var request struct {
+			Code string
+		}
+
+		err := c.BindJSON(&request)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": err,
+			c.AbortWithStatusJSON(http.StatusBadRequest, gin.H{
+				"error": err.Error(),
 			})
 			return
 		}
-		c.Header("Authorization", id)
-		c.JSON(http.StatusOK, gin.H{})
+
+		// TODO:
+		if request.Code != "test" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Wrong Code",
+			})
+			return
+		}
+
+		id, err := r.database.CreateSession(request.Code, []database.Scenario{
+			{ // TODO
+				HasDebt: false,
+				Starting: map[string]string{
+					"main.java": base64.StdEncoding.EncodeToString([]byte("Hello Wo...!")),
+				},
+				Instructions: "Replace the dots...",
+				Submitted:    nil,
+			},
+			{
+				HasDebt: true,
+				Starting: map[string]string{
+					"main.java": base64.StdEncoding.EncodeToString([]byte("HelLo Wo...!")),
+				},
+				Instructions: "Replace the dots...",
+				Submitted:    nil,
+			},
+			{
+				HasDebt: true,
+				Starting: map[string]string{
+					"main.java": base64.StdEncoding.EncodeToString([]byte("Hej Värl...!")),
+				},
+				Instructions: "Ersätt punkterna...",
+				Submitted:    nil,
+			},
+		})
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+		c.Header("Authorization", id.Hex())
+		c.JSON(http.StatusOK, gin.H{
+			"message": "ok",
+		})
 	})
 
 	rg.POST("/close", r.authMiddleware, func(c *gin.Context) {
+		err := r.database.EndSession(getSession(c).ID)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+
 		c.Header("Authorization", "")
 		c.JSON(http.StatusOK, gin.H{
 			"message": "ok",
 		})
 	})
 
-	rg.GET("/status", r.authMiddleware, func(c *gin.Context) {
+	rg.GET("/status", r.authMiddleware, func(c *gin.Context) { // todo
 		s := getSession(c)
 		c.JSON(http.StatusOK, gin.H{
 			"id": s.ID.Hex(),
