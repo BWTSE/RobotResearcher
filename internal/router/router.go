@@ -11,12 +11,14 @@ import (
 type Router struct {
 	codeService *code.CodeService
 	database    *database.Database
+	tempDir     string
 }
 
-func NewRouter(codeService *code.CodeService, database *database.Database) (*Router, error) {
+func NewRouter(codeService *code.CodeService, database *database.Database, tempDir string) (*Router, error) {
 	return &Router{
 		codeService: codeService,
 		database:    database,
+		tempDir:     tempDir,
 	}, nil
 }
 

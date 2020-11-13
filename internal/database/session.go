@@ -66,7 +66,7 @@ func (d *Database) AcceptAgreement(id primitive.ObjectID) error {
 		context.TODO(),
 		bson.M{"_id": id},
 		bson.D{
-			{"$set", bson.D{{"agreement_accepted", true}}},
+			{"$set", bson.D{{"agreement_accepted", true}}}, //nolint
 		},
 	)
 	if err != nil {
@@ -85,7 +85,7 @@ func (d *Database) EndSession(id primitive.ObjectID) error {
 		context.TODO(),
 		bson.M{"_id": id},
 		bson.D{
-			{"$set", bson.D{{"ended_at", time.Now()}}},
+			{"$set", bson.D{{"ended_at", time.Now()}}}, //nolint
 		},
 	)
 	if err != nil {
@@ -104,7 +104,7 @@ func (d *Database) OpenScenario(id primitive.ObjectID, n int) error {
 		context.TODO(),
 		bson.M{"_id": id},
 		bson.D{
-			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".started_at", time.Now()}}},
+			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".started_at", time.Now()}}}, //nolint
 		},
 	)
 	if err != nil {
@@ -123,8 +123,8 @@ func (d *Database) CommitScenario(id primitive.ObjectID, n int, submission map[s
 		context.TODO(),
 		bson.M{"_id": id},
 		bson.D{
-			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".submitted_at", time.Now()}}},
-			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".submitted", submission}}},
+			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".submitted_at", time.Now()}}}, //nolint
+			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".submitted", submission}}}, //nolint
 		},
 	)
 	if err != nil {
@@ -143,7 +143,7 @@ func (d *Database) SaveSurveyAnswers(id primitive.ObjectID, submission SurveySub
 		context.TODO(),
 		bson.M{"_id": id},
 		bson.D{
-			{"$set", bson.D{{"survey_answers", submission}}},
+			{"$set", bson.D{{"survey_answers", submission}}}, //nolint
 		},
 	)
 	if err != nil {

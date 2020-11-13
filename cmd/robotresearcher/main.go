@@ -4,9 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"sidus.io/robotresearcher/internal/database"
-
 	"sidus.io/robotresearcher/internal/code"
+	"sidus.io/robotresearcher/internal/database"
 	"sidus.io/robotresearcher/internal/router"
 )
 
@@ -24,7 +23,7 @@ func main() {
 	}
 	defer db.Close()
 
-	r, err := router.NewRouter(codeService, db)
+	r, err := router.NewRouter(codeService, db, "/tmp")
 	if err != nil {
 		fmt.Println(fmt.Errorf("while creating router: %w", err))
 		os.Exit(1)

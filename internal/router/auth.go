@@ -1,7 +1,6 @@
 package router
 
 import (
-	"encoding/base64"
 	"net/http"
 	"time"
 
@@ -97,7 +96,17 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			{ // TODO
 				HasDebt: false,
 				Starting: map[string]string{
-					"main.java": base64.StdEncoding.EncodeToString([]byte("Hello Wo...!")),
+					"Main.java":  "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
+					"World.java": "cHVibGljIGNsYXNzIFdvcmxkIHsKICAgIHN0YXRpYyBTdHJpbmcgbmFtZSAoKSB7CiAgICAgICAgcmV0dXJuICJ3b3JsZCI7CiAgICB9Cn0=",
+				},
+				Instructions: "skriv ut hello worlds!",
+				Submitted:    nil,
+			},
+			{
+				HasDebt: true,
+				Starting: map[string]string{
+					"Main.java":  "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
+					"World.java": "cHVibGljIGNsYXNzIFdvcmxkIHsKICAgIHN0YXRpYyBTdHJpbmcgbmFtZSAoKSB7CiAgICAgICAgcmV0dXJuICJ3b3JsZCI7CiAgICB9Cn0=",
 				},
 				Instructions: "Replace the dots...",
 				Submitted:    nil,
@@ -105,15 +114,8 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			{
 				HasDebt: true,
 				Starting: map[string]string{
-					"main.java": base64.StdEncoding.EncodeToString([]byte("HelLo Wo...!")),
-				},
-				Instructions: "Replace the dots...",
-				Submitted:    nil,
-			},
-			{
-				HasDebt: true,
-				Starting: map[string]string{
-					"main.java": base64.StdEncoding.EncodeToString([]byte("Hej Värl...!")),
+					"Main.java":  "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
+					"World.java": "cHVibGljIGNsYXNzIFdvcmxkIHsKICAgIHN0YXRpYyBTdHJpbmcgbmFtZSAoKSB7CiAgICAgICAgcmV0dXJuICJ3b3JsZCI7CiAgICB9Cn0=",
 				},
 				Instructions: "Ersätt punkterna...",
 				Submitted:    nil,
