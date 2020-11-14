@@ -11,8 +11,8 @@ type Database struct {
 	client *mongo.Client
 }
 
-func NewDatabase() (*Database, error) {
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://root:pass@localhost:27017"))
+func NewDatabase(connectionURI string) (*Database, error) {
+	client, err := mongo.NewClient(options.Client().ApplyURI(connectionURI))
 	if err != nil {
 		return nil, err
 	}

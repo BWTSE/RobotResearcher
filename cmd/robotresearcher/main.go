@@ -16,7 +16,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	db, err := database.NewDatabase()
+	db, err := database.NewDatabase(os.Getenv("DB_URI"))
 	if err != nil {
 		fmt.Println(fmt.Errorf("while creating code service: %w", err))
 		os.Exit(1)
