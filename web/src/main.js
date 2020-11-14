@@ -4,6 +4,7 @@ import router from './router'
 import vuetify from './plugins/vuetify'
 import './setup/axious'
 import './setup/auth'
+import './setup/sentry'
 
 Vue.config.productionTip = false
 
