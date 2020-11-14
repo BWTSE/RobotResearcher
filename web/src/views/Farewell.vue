@@ -15,9 +15,10 @@ export default {
   name: 'Farewell',
   mounted () {
     this.$auth.logout({
-      makeRequest: false,
+      makeRequest: true,
+      url: 'auth/close',
       redirect: false,
-    }) // TODO: logout
+    })
   },
 }
 </script>

@@ -18,4 +18,5 @@ Vue.use(Auth, {
   loginData: {
     url: 'auth/register',
   },
+  authRedirect: '/',
 })

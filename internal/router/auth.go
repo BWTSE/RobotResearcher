@@ -105,8 +105,7 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			{
 				HasDebt: true,
 				Starting: map[string]string{
-					"Main.java":  "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
-					"World.java": "cHVibGljIGNsYXNzIFdvcmxkIHsKICAgIHN0YXRpYyBTdHJpbmcgbmFtZSAoKSB7CiAgICAgICAgcmV0dXJuICJ3b3JsZCI7CiAgICB9Cn0=",
+					"Main.java": "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
 				},
 				Instructions: "Replace the dots...",
 				Submitted:    nil,
