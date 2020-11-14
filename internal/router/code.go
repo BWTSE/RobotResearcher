@@ -69,7 +69,7 @@ func (r *Router) applyCodeRoutes(rg *gin.RouterGroup) {
 
 		for name := range request.Submission {
 			cmd := exec.Command(
-				"/usr/bin/javac",
+				"javac",
 				name,
 			)
 			cmd.Dir = dir
@@ -96,7 +96,7 @@ func (r *Router) applyCodeRoutes(rg *gin.RouterGroup) {
 
 		cmd := exec.CommandContext(
 			cd,
-			"/usr/bin/java",
+			"java",
 			"-Djava.security.manager",
 			//			"-Djava.security.debug=all",
 			//			"-Djava.security.policy==./../../untrusted.policy",
