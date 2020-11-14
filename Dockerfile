@@ -15,7 +15,7 @@ RUN go build ./cmd/robotresearcher
 
 FROM openjdk:16-alpine
 
-EXPOSE 8080
+EXPOSE 8000
 
 # Copy over the app from the builder image
 COPY --from=builder /app/robotresearcher /robotresearcher
