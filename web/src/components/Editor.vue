@@ -16,7 +16,7 @@ export default {
       editor: null,
       editorOptions: {
         maxLines: 1000,
-        minLines: 45,
+        minLines: 50,
         printMargin: false,
         value: this.code,
         mode: 'ace/mode/java',
@@ -54,8 +54,8 @@ export default {
 <style scoped lang="scss">
   .editor {
     position: relative;
-    overflow-y: scroll;
-    height: calc(100vh - 72px - 48px);
+    overflow-y: auto;
+    height: calc(100vh - 72px);
     background-color: #272822;
     >div {
       position: absolute;

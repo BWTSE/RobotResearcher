@@ -1,23 +1,19 @@
 <template>
-  <v-sheet>
-
-    <v-tabs
-      show-arrows
-      @change="(n) => selected = n"
-    >
-      <v-tabs-slider color="cyan"></v-tabs-slider>
-      <v-tab
-        v-for="name in Object.keys(files)"
-        :key="name"
-      >
-        {{ name }}
-      </v-tab>
-    </v-tabs>
-    <editor
-      :code="files[selectedKey]"
-      @update:code="edited"
-    ></editor>
-  </v-sheet>
+  <v-row class="fill-height">
+    <v-col cols="2" class="list-col fill-height">
+      <v-list dense>
+        <v-list-item-group v-model="selected" color="primary">
+          <v-list-item :key="name" v-for="name in Object.keys(files)">{{ name }}</v-list-item>
+        </v-list-item-group>
+      </v-list>
+    </v-col>
+    <v-col>
+      <editor
+        :code="files[selectedKey]"
+        @update:code="edited"
+      ></editor>
+    </v-col>
+  </v-row>
 </template>
 
 <script>
@@ -50,5 +46,14 @@ export default {
 </script>
 
 <style scoped>
-
+.col {
+  padding: 0;
+}
+.list-col {
+  overflow-y: auto;
+  min-width: 200px;
+}
+.row {
+  margin: 0;
+}
 </style>
