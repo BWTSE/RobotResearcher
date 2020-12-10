@@ -84,8 +84,15 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			return
 		}
 
-		// TODO:
-		if request.Code != "test" {
+		valid, err := r.database.IsValidCode(request.Code)
+		if err != nil {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+
+			return
+		}
+		if !valid {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 				"error": "Wrong Code",
 			})

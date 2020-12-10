@@ -51,7 +51,7 @@ export default {
           this.processing = false
         }).catch((er) => {
           this.processing = false
-          if (er.response && er.response.status === 400) {
+          if (er.response && er.response.status === 401) {
             this.errorMessage = 'Invalid Code'
             this.code = ''
           } else {
