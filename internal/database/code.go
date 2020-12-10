@@ -16,6 +16,7 @@ func (d *Database) IsValidCode(code string) (bool, error) {
 		if err == mongo.ErrNoDocuments {
 			return false, nil
 		}
+
 		return false, err
 	}
 
