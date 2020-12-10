@@ -25,7 +25,7 @@
         <Output :code="runOutput + 'Exit code: ' + runCode"></Output>
       </div>
       <div class="d-flex justify-space-between">
-        <span>Closes {{ timeLeft }}</span>
+        <v-spacer></v-spacer>
         <v-btn
           color="primary"
           @click="next"
@@ -59,14 +59,6 @@ export default {
   },
   props: {
     number: Number,
-  },
-  computed: {
-    timeLeft () {
-      if (this.startedAt == null) {
-        return ''
-      }
-      return this.startedAt.add(20, 'minutes').fromNow()
-    },
   },
   components: { Output, MultiFileEditor },
   methods: {
