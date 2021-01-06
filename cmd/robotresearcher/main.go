@@ -7,6 +7,7 @@ import (
 	"sidus.io/robotresearcher/internal/code"
 	"sidus.io/robotresearcher/internal/database"
 	"sidus.io/robotresearcher/internal/router"
+	"sidus.io/robotresearcher/internal/scenario"
 )
 
 func main() {
@@ -23,7 +24,19 @@ func main() {
 	}
 	defer db.Close()
 
-	r, err := router.NewRouter(codeService, db, "/tmp")
+	previousParticipants, err := db.CountSessions()
+	if err != nil {
+		fmt.Println(fmt.Errorf("while counting previous sessions: %w", err))
+		os.Exit(1)
+	}
+
+	scenarioService, err := scenario.NewService(previousParticipants)
+	if err != nil {
+		fmt.Println(fmt.Errorf("while creating scenario servive: %w", err))
+		os.Exit(1)
+	}
+
+	r, err := router.NewRouter(codeService, scenarioService, db, "/tmp")
 	if err != nil {
 		fmt.Println(fmt.Errorf("while creating router: %w", err))
 		os.Exit(1)

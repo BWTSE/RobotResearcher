@@ -11,12 +11,13 @@ import (
 )
 
 type Scenario struct {
-	HasDebt      bool              `bson:"has_debt"`
+	HasHighDebt  bool              `bson:"has_high_debt"`
 	StartedAt    time.Time         `bson:"started_at"`
 	SubmittedAt  time.Time         `bson:"submitted_at"`
 	Instructions string            `bson:"instructions"`
 	Starting     map[string]string `bson:"starting"`
 	Submitted    map[string]string `bson:"submitted"`
+	Name         string            `bson:"name"`
 }
 
 type SurveySubmission struct {
@@ -31,6 +32,11 @@ type Session struct {
 	Scenarios         []Scenario         `bson:"scenarios"`
 	StartedAt         time.Time          `bson:"started_at"`
 	EndedAt           time.Time          `bson:"ended_at"`
+}
+
+func (d *Database) CountSessions() (int, error) {
+	n, err := d.client.Database("test").Collection("sessions").CountDocuments(context.TODO(), bson.M{})
+	return int(n), err
 }
 
 func (d *Database) GetSession(id primitive.ObjectID) (Session, error) {

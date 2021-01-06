@@ -3,22 +3,24 @@ package router
 import (
 	"github.com/gin-gonic/gin"
 
-	"sidus.io/robotresearcher/internal/database"
-
 	"sidus.io/robotresearcher/internal/code"
+	"sidus.io/robotresearcher/internal/database"
+	"sidus.io/robotresearcher/internal/scenario"
 )
 
 type Router struct {
-	codeService *code.CodeService
-	database    *database.Database
-	tempDir     string
+	codeService     *code.CodeService
+	scenarioService *scenario.Service
+	database        *database.Database
+	tempDir         string
 }
 
-func NewRouter(codeService *code.CodeService, database *database.Database, tempDir string) (*Router, error) {
+func NewRouter(codeService *code.CodeService, scenarioService *scenario.Service, database *database.Database, tempDir string) (*Router, error) {
 	return &Router{
-		codeService: codeService,
-		database:    database,
-		tempDir:     tempDir,
+		codeService:     codeService,
+		scenarioService: scenarioService,
+		database:        database,
+		tempDir:         tempDir,
 	}, nil
 }
 

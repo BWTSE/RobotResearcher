@@ -99,34 +99,7 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			return
 		}
 
-		id, err := r.database.CreateSession(request.Code, []database.Scenario{
-			{ // TODO
-				HasDebt: false,
-				Starting: map[string]string{
-					"Main.java":  "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
-					"World.java": "cHVibGljIGNsYXNzIFdvcmxkIHsKICAgIHN0YXRpYyBTdHJpbmcgbmFtZSAoKSB7CiAgICAgICAgcmV0dXJuICJ3b3JsZCI7CiAgICB9Cn0=",
-				},
-				Instructions: "skriv ut hello worlds!",
-				Submitted:    nil,
-			},
-			{
-				HasDebt: true,
-				Starting: map[string]string{
-					"Main.java": "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
-				},
-				Instructions: "Replace the dots...",
-				Submitted:    nil,
-			},
-			{
-				HasDebt: true,
-				Starting: map[string]string{
-					"Main.java":  "Y2xhc3MgTWFpbiB7CiAgICBwdWJsaWMgc3RhdGljIHZvaWQgbWFpbihTdHJpbmdbXSBhcmdzKSB7CiAgICAgICAgU3lzdGVtLm91dC5wcmludGxuKCJIZWxsbyAiICsgV29ybGQubmFtZSgpKTsKICAgIH0KfQo=",
-					"World.java": "cHVibGljIGNsYXNzIFdvcmxkIHsKICAgIHN0YXRpYyBTdHJpbmcgbmFtZSAoKSB7CiAgICAgICAgcmV0dXJuICJ3b3JsZCI7CiAgICB9Cn0=",
-				},
-				Instructions: "Ersätt punkterna...",
-				Submitted:    nil,
-			},
-		})
+		id, err := r.database.CreateSession(request.Code, r.scenarioService.GetSequence())
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
