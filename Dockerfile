@@ -20,4 +20,7 @@ EXPOSE 8000
 # Copy over the app from the builder image
 COPY --from=builder /app/robotresearcher /robotresearcher
 
+# Copy in scenarios
+COPY ./Scenarios /Scenarios
+
 ENTRYPOINT ["/robotresearcher"]
