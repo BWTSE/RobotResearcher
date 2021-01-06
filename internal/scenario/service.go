@@ -28,7 +28,7 @@ func NewService(previousParticipants int) (*Service, error) {
 		}
 	}()
 
-	files, err := ioutil.ReadDir("artifacts")
+	files, err := ioutil.ReadDir("Scenarios")
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func NewService(previousParticipants int) (*Service, error) {
 
 	for _, file := range files {
 		if file.IsDir() && !strings.HasPrefix(path.Base(file.Name()), ".") {
-			a, err := newArtifact(path.Join("artifacts", file.Name()))
+			a, err := newArtifact(path.Join("Scenarios", file.Name()))
 			if err != nil {
 				return nil, err
 			}
