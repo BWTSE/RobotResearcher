@@ -9,10 +9,17 @@ jobs:
     name: Push Backend
     runs-on: ubuntu-latest
     steps:
-      - name: Check out the repo
+      - name: Clone the repo
         uses: actions/checkout@v2
+      - name: clone submodule
+        uses: actions/checkout@v2
+        with:
+          repository: BrokenWindowsInvestigation/Scenarios
+          path: Scenarios
+          ssh-key: ${{ secrets.SCENARIOS_DEPLOY_KEY }}
+          persist-credentials: true
       - name: Checkout submodules
-        uses: textbook/git-checkout-submodule-action@master
+        run: git submodule update --init --recursive
       - name: Build & push to GitHub Packages
         uses: docker/build-push-action@v1
         with:
