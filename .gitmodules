@@ -1,0 +1,3 @@
+[submodule "Scenarios"]
+	path = Scenarios
+	url = git@github.com:BrokenWindowsInvestigation/Scenarios.git
