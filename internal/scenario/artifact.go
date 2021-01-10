@@ -22,12 +22,12 @@ func newArtifact(dir string) (artifact, error) {
 		return artifact{}, err
 	}
 
-	lowDebt, err := getFiles(path.Join(dir, "lowDebt"))
+	lowDebt, err := getFiles(path.Join(dir, "low_debt", path.Base(dir)))
 	if err != nil {
 		return artifact{}, err
 	}
 
-	highDebt, err := getFiles(path.Join(dir, "highDebt"))
+	highDebt, err := getFiles(path.Join(dir, "high_debt", path.Base(dir)))
 	if err != nil {
 		return artifact{}, err
 	}
