@@ -15,21 +15,21 @@
             Welcome and thanks for participating in our experiment.
           </h3>
           <p>
-            The aim of the experiment is to investigate the evolution of software projects through asking the participants to complete three tasks in preexisting projects.
+            The experiment aims to investigate the evolution of software projects by asking the participants to complete three tasks in preexisting projects.
             There will be three (3) tasks to be performed followed by a short survey.
-            Your participation is voluntarily and you are free to drop out of the experiment at any time.
-            <strong>We do greatly appreciate if you complete the whole experiment</strong> so that we may require some useful results.
+            Your participation is voluntary and you are free to drop out of the experiment at any time.
+            <strong>We do greatly appreciate if you complete the whole experiment</strong> so that we may acquire some useful results.
           </p>
           <p>
-            This experiment is part of a master thesis by William Leven (william@leven.id) and Hampus Broman (bromanh@student.chalmers.se) who studies Software Engineering at Chalmers University. Their supervisors are Terese Besker and Richard Torkar.
+            This experiment is part of a master thesis by William Leven (william@leven.id) and Hampus Broman (bromanh@student.chalmers.se) studies Software Engineering at Chalmers University. Their supervisors are Terese Besker and Richard Torkar.
           </p>
           <p><!-- Also in Farewell.vue -->
-            If you want to receive a copy of the thesis after it's completion you may provide your email at: <a target="_blank" href="https://forms.gle/WJ3kXBfBYjCV35E89">https://forms.gle/WJ3kXBfBYjCV35E89</a>
+            If you want to receive a copy of the thesis after its completion you may provide your email at: <a target="_blank" href="https://forms.gle/WJ3kXBfBYjCV35E89">https://forms.gle/WJ3kXBfBYjCV35E89</a>
           </p>
           <v-divider />
           <h3>Confidentiality agreement</h3>
           <p>
-            During the experiment we will collect collect your solutions, your completion time and survey answers for further analysis in order to investigate the evolution of software projects.
+            During the experiment we will collect your solutions, your completion time, and survey answers for further analysis to investigate the evolution of software projects.
             Responsible for the collection are William Leven (william@leven.id) and Hampus Broman (bromanh@student.chalmers.se) who studies Software Engineering at Chalmers University.
           </p>
           <p>
@@ -39,16 +39,17 @@
           <p>
             The data will be continuously collected for the whole duration of the experiment and will be stored even if the experiment isn't completed.
             The data we collect from you will also be enriched by data about the place of your employment.
-            After the completion of the thesis the collected (anonymized) data will be made publicly available.
+            After the completion of the thesis, the collected (anonymized) data will be made publicly available.
           </p>
           <p>
-            None of the collected data can by it's nature uniquely identify you as an individual, providing a certain degree of anonymity.
-            In those cases where the submitted data contains any uniquely identifying information the dataset will be anonymized before further processing or publication to ensure confidentiality.
-            Due to the anonymous nature of the data collected we can not remove or rectify your data.
+            None of the collected data can by its nature uniquely identify you as an individual, providing a certain degree of anonymity.
+            In those cases where the submitted data contains any uniquely identifying information, the dataset will be anonymized before further processing or publication to ensure confidentiality.
+            Due to the anonymous nature of the data collected, we can not remove or rectify your data.
           </p>
           <p>
             If you have any questions or complaints regarding the data processing you may contact William Levén at <a target="_blank" href="mailto:william@leven.id">william@leven.id</a>.
           </p>
+
           <v-checkbox
             label="I accept that my data is collected and processed in accordance to the agreement above."
             v-model="accepted"
