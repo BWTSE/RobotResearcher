@@ -21,7 +21,24 @@ type Scenario struct {
 }
 
 type SurveySubmission struct {
-	LikesChocolate bool `bson:"likes_chocolate"`
+	EducationLevel        string `bson:"education_level"`
+	EducationField        string `bson:"education_field"`
+	ProgrammingExperience string `bson:"programming_experience"`
+	JavaExperience        string `bson:"java_experience"`
+	WorkDomain            string `bson:"work_domain"`
+
+	CompanyUsesCodeReviews     bool `bson:"company_uses_code_reviews"`
+	CompanyUsesPairProgramming bool `bson:"company_uses_pair_programming"`
+	CompanyTracksTechnicalDebt bool `bson:"company_tracks_technical_debt"`
+
+	ScenarioShapesQuality       int `bson:"shapes_quality"`
+	ScenarioShapesQualityChange int `bson:"shapes_change_quality"`
+
+	ScenarioBookingQuality       int `bson:"booking_quality"`
+	ScenarioBookingQualityChange int `bson:"booking_change_quality"`
+
+	ScenarioShoppingQuality       int `bson:"shopping_quality"`
+	ScenarioShoppingQualityChange int `bson:"shopping_change_quality"`
 }
 
 type Session struct {
