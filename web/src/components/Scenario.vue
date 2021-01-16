@@ -10,8 +10,8 @@
     </v-col>
     <v-col class="util fill-height d-flex justify-space-between flex-column">
       <div
+        v-html="htmlinfo"
       >
-        {{ info }}
       </div>
       <div>
         <v-btn
@@ -41,6 +41,7 @@
 
 <script>
 import moment from 'moment'
+import marked from 'marked'
 import MultiFileEditor from './MultiFileEditor'
 import Output from './Output'
 
@@ -61,6 +62,11 @@ export default {
     number: Number,
   },
   components: { Output, MultiFileEditor },
+  computed: {
+    htmlinfo () {
+      return marked(this.info)
+    },
+  },
   methods: {
     next () {
       if (this.loading) return
@@ -128,6 +134,10 @@ export default {
   height: calc(100vh - 72px);
   .util {
     padding-right: 24px;
+    overflow-y: auto;
+    > * {
+      margin-bottom: 30px;
+    }
   }
   .code {
     padding: 0;
