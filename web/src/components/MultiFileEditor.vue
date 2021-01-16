@@ -3,13 +3,13 @@
     <v-col cols="2" class="list-col fill-height">
       <v-list dense>
         <v-list-item-group v-model="selected" color="primary">
-          <v-list-item :key="name" v-for="name in Object.keys(files)">{{ name }}</v-list-item>
+          <v-list-item :key="name" v-for="name in Object.keys(files)" :value="name">{{ name }}</v-list-item>
         </v-list-item-group>
       </v-list>
     </v-col>
     <v-col>
       <editor
-        :code="files[selectedKey]"
+        :code="files[selected]"
         @update:code="edited"
       ></editor>
     </v-col>
@@ -18,26 +18,31 @@
 
 <script>
 import Editor from './Editor'
+
+const defaultFile = 'Main.java'
+
 export default {
   name: 'MultiFileEditor',
   components: { Editor },
   data () {
     return {
-      selected: 0,
+      selected: defaultFile,
     }
   },
   props: {
     files: Object,
   },
-  computed: {
-    selectedKey () {
-      return Object.keys(this.files)[this.selected]
+  watch: {
+    files () {
+      if (this.files[this.selected] === undefined) {
+        this.selected = defaultFile
+      }
     },
   },
   methods: {
     edited (code) {
       this.$emit('update:file', {
-        file: this.selectedKey,
+        file: this.selected,
         content: code,
       })
     },
