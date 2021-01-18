@@ -5,7 +5,7 @@
         <div class="helper">
           Right click on files to add new, rename and delete.
         </div>
-        <v-list-item-group v-model="selected" color="primary">
+        <v-list-item-group v-model="selected" color="primary" mandatory>
           <v-list-item
             v-for="name in Object.keys(files)"
             :key="name"
