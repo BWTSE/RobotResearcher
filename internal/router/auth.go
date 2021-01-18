@@ -84,7 +84,7 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			return
 		}
 
-		valid, err := r.database.IsValidCode(request.Code)
+		valid, ignoreCount, err := r.database.IsValidCode(request.Code)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
@@ -99,7 +99,14 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			return
 		}
 
-		id, err := r.database.CreateSession(request.Code, r.scenarioService.GetSequence())
+		var sequence []database.Scenario
+		if ignoreCount {
+			sequence = r.scenarioService.GetDummySequence()
+		} else {
+			sequence = r.scenarioService.GetSequence()
+		}
+
+		id, err := r.database.CreateSession(request.Code, sequence, ignoreCount)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),

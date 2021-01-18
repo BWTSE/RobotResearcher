@@ -12,11 +12,10 @@ import (
 )
 
 type Service struct {
-	a1         artifact
-	a2         artifact
-	a3         artifact
-	idProducer chan int
-	rand       *rand.Rand
+	idProducer      chan int
+	dummyIdProducer chan int
+	rand            *rand.Rand
+	sequences       [][]database.Scenario
 }
 
 func NewService(previousParticipants int) (*Service, error) {
@@ -25,6 +24,14 @@ func NewService(previousParticipants int) (*Service, error) {
 	go func() {
 		for i := previousParticipants; true; i++ {
 			idProducer <- i
+		}
+	}()
+
+	dummyIdProducer := make(chan int)
+
+	go func() {
+		for i := 0; true; i++ {
+			dummyIdProducer <- i
 		}
 	}()
 
@@ -46,54 +53,65 @@ func NewService(previousParticipants int) (*Service, error) {
 		}
 	}
 
+	a1 := artifacts[0]
+	a2 := artifacts[1]
+	a3 := artifacts[2]
+
 	if len(artifacts) != 3 {
 		return nil, fmt.Errorf("%d artifacts instead of 3", len(artifacts))
 	}
 
 	return &Service{
-		a1:         artifacts[0],
-		a2:         artifacts[1],
-		a3:         artifacts[2],
-		idProducer: idProducer,
-		rand:       rand.New(rand.NewSource(time.Now().Unix())),
+		idProducer:      idProducer,
+		dummyIdProducer: dummyIdProducer,
+		rand:            rand.New(rand.NewSource(time.Now().Unix())),
+		sequences: [][]database.Scenario{
+			{
+				a1.lowDebtScenario(),
+				a2.highDebtScenario(),
+				a3.lowDebtScenario(),
+			},
+			{
+				a1.highDebtScenario(),
+				a2.lowDebtScenario(),
+				a3.highDebtScenario(),
+			},
+			{
+				a1.highDebtScenario(),
+				a2.highDebtScenario(),
+				a3.lowDebtScenario(),
+			},
+			{
+				a1.lowDebtScenario(),
+				a2.lowDebtScenario(),
+				a3.highDebtScenario(),
+			},
+			{
+				a1.lowDebtScenario(),
+				a2.highDebtScenario(),
+				a3.highDebtScenario(),
+			},
+			{
+				a1.highDebtScenario(),
+				a2.lowDebtScenario(),
+				a3.lowDebtScenario(),
+			},
+		},
 	}, nil
 }
 
 func (s *Service) GetSequence() []database.Scenario {
-	sequences := [][]database.Scenario{
-		{
-			s.a1.lowDebtScenario(),
-			s.a2.highDebtScenario(),
-			s.a3.lowDebtScenario(),
-		},
-		{
-			s.a1.highDebtScenario(),
-			s.a2.lowDebtScenario(),
-			s.a3.highDebtScenario(),
-		},
-		{
-			s.a1.highDebtScenario(),
-			s.a2.highDebtScenario(),
-			s.a3.lowDebtScenario(),
-		},
-		{
-			s.a1.lowDebtScenario(),
-			s.a2.lowDebtScenario(),
-			s.a3.highDebtScenario(),
-		},
-		{
-			s.a1.lowDebtScenario(),
-			s.a2.highDebtScenario(),
-			s.a3.highDebtScenario(),
-		},
-		{
-			s.a1.highDebtScenario(),
-			s.a2.lowDebtScenario(),
-			s.a3.lowDebtScenario(),
-		},
-	}
+	scenarios := s.sequences[<-s.idProducer%len(s.sequences)]
 
-	scenarios := sequences[<-s.idProducer%len(sequences)]
+	s.rand.Shuffle(len(scenarios), func(i, j int) {
+		scenarios[i], scenarios[j] = scenarios[j], scenarios[i]
+	})
+
+	return scenarios
+}
+
+func (s *Service) GetDummySequence() []database.Scenario {
+	scenarios := s.sequences[<-s.dummyIdProducer%len(s.sequences)]
 
 	s.rand.Shuffle(len(scenarios), func(i, j int) {
 		scenarios[i], scenarios[j] = scenarios[j], scenarios[i]

@@ -44,6 +44,7 @@ type SurveySubmission struct {
 type Session struct {
 	ID                primitive.ObjectID `bson:"_id,omitempty"`
 	RegisterCode      string             `bson:"register_code"`
+	IgnoreCount       bool               `bson:"ignore_count"`
 	AgreementAccepted bool               `bson:"agreement_accepted"`
 	SurveyAnswers     *SurveySubmission  `bson:"survey_answers"`
 	Scenarios         []Scenario         `bson:"scenarios"`
@@ -52,7 +53,7 @@ type Session struct {
 }
 
 func (d *Database) CountSessions() (int, error) {
-	n, err := d.client.Database("test").Collection("sessions").CountDocuments(context.TODO(), bson.M{})
+	n, err := d.client.Database("test").Collection("sessions").CountDocuments(context.TODO(), bson.M{"ignore_count": false})
 	return int(n), err
 }
 
@@ -69,9 +70,10 @@ func (d *Database) GetSession(id primitive.ObjectID) (Session, error) {
 	return session, nil
 }
 
-func (d *Database) CreateSession(code string, scenarios []Scenario) (primitive.ObjectID, error) {
+func (d *Database) CreateSession(code string, scenarios []Scenario, ignoreCount bool) (primitive.ObjectID, error) {
 	session := Session{
 		RegisterCode: code,
+		IgnoreCount:  ignoreCount,
 		Scenarios:    scenarios,
 		StartedAt:    time.Now(),
 	}

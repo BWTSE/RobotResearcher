@@ -8,17 +8,26 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-func (d *Database) IsValidCode(code string) (bool, error) {
+func (d *Database) IsValidCode(code string) (bool, bool, error) {
 	cursor := d.client.Database("test").Collection("codes").FindOne(context.TODO(), bson.M{"code": code, "open": true})
 
 	err := cursor.Err()
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return false, nil
+			return false, false, nil
 		}
 
-		return false, err
+		return false, false, err
 	}
 
-	return true, nil
+	var res struct {
+		Ignore bool `bson:"ignore"`
+	}
+
+	err = cursor.Decode(&res)
+	if err != nil {
+		return false, false, err
+	}
+
+	return true, res.Ignore, nil
 }
