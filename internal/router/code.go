@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 
@@ -29,9 +30,19 @@ func (r *Router) applyCodeRoutes(rg *gin.RouterGroup) {
 			return
 		}
 
-		dir := r.tempDir + string(os.PathSeparator) + "robotresearcher" + string(os.PathSeparator) + uuid.New().String()
+		s := getSession(c)
 
-		err = os.MkdirAll(dir, 0775)
+		packageName := "unknown"
+		for i := len(s.Scenarios) - 1; i >= 0; i-- {
+			if !s.Scenarios[i].StartedAt.IsZero() {
+				packageName = s.Scenarios[i].Name
+				break
+			}
+		}
+
+		dir := path.Join(r.tempDir, "robotresearcher", uuid.New().String())
+
+		err = os.MkdirAll(path.Join(dir, packageName), 0775)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -60,7 +71,7 @@ func (r *Router) applyCodeRoutes(rg *gin.RouterGroup) {
 				return
 			}
 
-			err = ioutil.WriteFile(dir+string(os.PathSeparator)+name, code, 0644)
+			err = ioutil.WriteFile(path.Join(dir, packageName, name), code, 0644)
 			if err != nil {
 				c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 				return
@@ -70,7 +81,7 @@ func (r *Router) applyCodeRoutes(rg *gin.RouterGroup) {
 		for name := range request.Submission {
 			cmd := exec.Command(
 				"javac",
-				name,
+				path.Join(packageName, name),
 			)
 			cmd.Dir = dir
 
@@ -101,7 +112,7 @@ func (r *Router) applyCodeRoutes(rg *gin.RouterGroup) {
 			//			"-Djava.security.debug=all",
 			//			"-Djava.security.policy==./../../untrusted.policy",
 			"-Xmx10M",
-			"Main",
+			packageName+".Main",
 		)
 		cmd.Dir = dir
 
