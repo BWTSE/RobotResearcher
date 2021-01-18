@@ -6,6 +6,7 @@
       <multi-file-editor
         :files="files"
         @update:file="({file, content}) => files[file] = content"
+        @delete:file="({file}) => delete files[file]"
       ></multi-file-editor>
     </v-col>
     <v-col class="util fill-height d-flex justify-space-between flex-column">
