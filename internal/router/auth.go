@@ -138,8 +138,15 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 
 	rg.GET("/status", r.authMiddleware, func(c *gin.Context) { // todo
 		s := getSession(c)
+
+		var scenarioNames []string
+		for _, scenario := range s.Scenarios {
+			scenarioNames = append(scenarioNames, scenario.Name)
+		}
+
 		c.JSON(http.StatusOK, gin.H{
-			"id": s.ID.Hex(),
+			"id":             s.ID.Hex(),
+			"scenario_order": scenarioNames,
 		})
 	})
 }

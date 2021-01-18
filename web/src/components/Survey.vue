@@ -88,6 +88,8 @@
 </template>
 
 <script>
+import Vue from 'vue'
+
 export default {
   name: 'Survey',
   data () {
@@ -133,6 +135,11 @@ export default {
     invalid () {
       return Object.values(this.surveyAnswers).some((a) => a === null || a === [])
     },
+  },
+  mounted () {
+    this.$auth.fetch().then((a) => {
+      Vue.set(this, 'scenarios', a.data.scenario_order.map((name) => name.charAt(0).toUpperCase() + name.slice(1)))
+    })
   },
   methods: {
     submit () {
