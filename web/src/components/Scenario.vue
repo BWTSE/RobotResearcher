@@ -27,14 +27,41 @@
       </div>
       <div class="d-flex justify-space-between">
         <v-spacer></v-spacer>
-        <v-btn
-          color="primary"
-          @click="next"
-          width="200px"
-          :disabled="loading"
+        <v-dialog
+          v-model="nextDialog"
+          max-width="600px"
         >
-          Submit
-        </v-btn>
+          <template v-slot:activator="{on}">
+            <v-btn
+              color="primary"
+              v-on="on"
+              width="200px"
+              :disabled="loading || nextDialog"
+            >
+              Submit
+            </v-btn>
+          </template>
+          <v-card>
+            <v-card-title>Continue</v-card-title>
+            <v-card-text>You can not go back once you have submitted your solution</v-card-text>
+            <v-card-actions>
+              <v-btn
+                @click="nextDialog = false"
+                :disabled="loading"
+              >
+                Go back
+              </v-btn>
+              <v-spacer></v-spacer>
+              <v-btn
+                color="primary"
+                @click="next"
+                :disabled="loading"
+              >
+                Submit
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </div>
     </v-col>
   </v-row>
@@ -57,6 +84,7 @@ export default {
       loading: false,
       runOutput: '',
       runCode: null,
+      nextDialog: false,
     }
   },
   props: {
@@ -74,9 +102,11 @@ export default {
       this.loading = true
       this.axios.post('scenario/' + (Number(this.$route.params.number) - 1), { submission: this.prepareSubmission(this.files) }).then(() => {
         this.loading = false
+        this.nextDialog = false
         this.$router.push('/experiment/' + (Number(this.$route.params.number) + 1))
       }).catch(() => {
         this.loading = false
+        this.nextDialog = false
       })
     },
     run () {
