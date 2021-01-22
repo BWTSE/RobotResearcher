@@ -3,7 +3,7 @@
     <v-col cols="2" class="list-col fill-height">
       <v-list dense>
         <div class="helper">
-          Right click on files to add new, rename and delete.
+          Right click on files to add new, rename and delete. Refreshing the page will reset the whole task.
         </div>
         <v-list-item-group v-model="selected" color="primary" mandatory>
           <v-list-item
