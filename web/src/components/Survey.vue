@@ -63,7 +63,7 @@
             min="-2"
             max="2"
           ></v-slider>
-          <span>The work I did in the <strong>{{ scenario }}</strong> task made the quality of the system?</span>
+          <span>The work I did in the <strong>{{ scenario }}</strong> task made the quality (maintainability) of the system?</span>
           <v-slider
             v-model="surveyAnswers['Scenario' + scenario + 'QualityChange']"
             :tick-labels="['Much Worse', 'Worse', 'Neutral', 'Better', 'Much Better']"
