@@ -30,6 +30,7 @@
         <v-dialog
           v-model="nextDialog"
           max-width="600px"
+          @keydown.enter="next"
         >
           <template v-slot:activator="{on}">
             <v-btn

@@ -91,6 +91,7 @@
       <v-dialog
         v-model="deleteDialogOpen"
         max-width="600px"
+        @keydown.enter="deleteFile"
       >
         <v-card>
           <v-card-title>Delete file</v-card-title>
