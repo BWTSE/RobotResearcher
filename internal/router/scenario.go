@@ -13,7 +13,6 @@ func (r *Router) scenarioMiddleware(c *gin.Context) {
 
 }
 
-// todo, no late submissions?
 func (r *Router) applyScenarioRoutes(rg *gin.RouterGroup) {
 	rg.Use(r.authMiddleware)
 	rg.Use(r.agreementMiddleware)

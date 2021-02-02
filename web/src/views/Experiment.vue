@@ -26,7 +26,7 @@ export default {
   components: { Scenario, Survey },
   data () {
     return {
-      scenarios: 3,
+      scenarios: 2,
     }
   },
   computed: {

@@ -106,14 +106,11 @@ export default {
         CompanyUsesPairProgramming: null,
         CompanyTracksTechnicalDebt: null,
 
-        ScenarioShapesQuality: null,
-        ScenarioShapesQualityChange: null,
+        ScenarioTicketsQuality: null,
+        ScenarioTicketsQualityChange: null,
 
         ScenarioBookingQuality: null,
         ScenarioBookingQualityChange: null,
-
-        ScenarioShoppingQuality: null,
-        ScenarioShoppingQualityChange: null,
       },
       edLevels: [
         'None',

@@ -53,13 +53,12 @@ func NewService(previousParticipants int) (*Service, error) {
 		}
 	}
 
-	a1 := artifacts[0]
-	a2 := artifacts[1]
-	a3 := artifacts[2]
-
-	if len(artifacts) != 3 {
+	if len(artifacts) != 2 {
 		return nil, fmt.Errorf("%d artifacts instead of 3", len(artifacts))
 	}
+
+	a1 := artifacts[0]
+	a2 := artifacts[1]
 
 	return &Service{
 		idProducer:      idProducer,
@@ -69,32 +68,10 @@ func NewService(previousParticipants int) (*Service, error) {
 			{
 				a1.lowDebtScenario(),
 				a2.highDebtScenario(),
-				a3.lowDebtScenario(),
 			},
 			{
 				a1.highDebtScenario(),
 				a2.lowDebtScenario(),
-				a3.highDebtScenario(),
-			},
-			{
-				a1.highDebtScenario(),
-				a2.highDebtScenario(),
-				a3.lowDebtScenario(),
-			},
-			{
-				a1.lowDebtScenario(),
-				a2.lowDebtScenario(),
-				a3.highDebtScenario(),
-			},
-			{
-				a1.lowDebtScenario(),
-				a2.highDebtScenario(),
-				a3.highDebtScenario(),
-			},
-			{
-				a1.highDebtScenario(),
-				a2.lowDebtScenario(),
-				a3.lowDebtScenario(),
 			},
 		},
 	}, nil
