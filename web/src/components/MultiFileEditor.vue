@@ -21,14 +21,14 @@
         v-model="contextMenuOpen"
       >
         <v-list class="ctx-menu">
-          <v-list-item>
-            <v-list-item-title @click="newFileDialog = true">New File</v-list-item-title>
+          <v-list-item @click="newFileDialog = true">
+            <v-list-item-title>New File</v-list-item-title>
           </v-list-item>
-          <v-list-item v-if="contextMenuFile !== 'Main.java'">
-            <v-list-item-title @click="pendingRename = contextMenuFile">Rename</v-list-item-title>
+          <v-list-item v-if="contextMenuFile !== 'Main.java'" @click="pendingRename = contextMenuFile">
+            <v-list-item-title>Rename</v-list-item-title>
           </v-list-item>
-          <v-list-item v-if="contextMenuFile !== 'Main.java'">
-            <v-list-item-title @click="pendingDelete = contextMenuFile">Delete</v-list-item-title>
+          <v-list-item v-if="contextMenuFile !== 'Main.java'" @click="pendingDelete = contextMenuFile">
+            <v-list-item-title>Delete</v-list-item-title>
           </v-list-item>
         </v-list>
       </v-menu>
