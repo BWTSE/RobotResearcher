@@ -52,6 +52,22 @@ type Session struct {
 	EndedAt           time.Time          `bson:"ended_at"`
 }
 
+func (d *Database) GetSessions(code string) ([]Session, error) {
+	cursor, err := d.client.Database("test").Collection("sessions").Find(context.TODO(), bson.M{"register_code": code})
+	if err != nil {
+		return nil, err
+	}
+
+	var sessions []Session
+
+	err = cursor.All(context.TODO(), &sessions)
+	if err != nil {
+		return nil, err
+	}
+
+	return sessions, err
+}
+
 func (d *Database) CountSessions() (int, error) {
 	n, err := d.client.Database("test").Collection("sessions").CountDocuments(context.TODO(), bson.M{"ignore_count": false})
 	return int(n), err
