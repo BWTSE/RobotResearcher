@@ -47,6 +47,7 @@
                 label="File name"
                 suffix=".java"
                 v-model="newFileName"
+                @keyup.enter="addFile()"
                 :error-messages="newFileError"
               ></v-text-field>
               <v-btn
@@ -74,6 +75,7 @@
                 label="New name"
                 suffix=".java"
                 v-model="renameFileName"
+                @keyup.enter="renameFile()"
                 :error-messages="renameFileError"
               ></v-text-field>
               <v-btn
