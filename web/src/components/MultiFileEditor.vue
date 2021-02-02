@@ -34,6 +34,7 @@
       </v-menu>
       <v-dialog
         v-model="newFileDialog"
+        max-width="600px"
       >
         <v-card>
           <v-card-title>New File</v-card-title>
@@ -60,6 +61,7 @@
 
       <v-dialog
         v-model="renameDialogOpen"
+        max-width="600px"
       >
         <v-card>
           <v-card-title>Rename File</v-card-title>
@@ -86,6 +88,7 @@
 
       <v-dialog
         v-model="deleteDialogOpen"
+        max-width="600px"
       >
         <v-card>
           <v-card-title>Delete file</v-card-title>
