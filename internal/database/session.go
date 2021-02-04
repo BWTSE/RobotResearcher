@@ -20,7 +20,7 @@ type Scenario struct {
 	Name         string            `bson:"name"`
 }
 
-type SurveySubmission struct {
+type BackgroundSubmission struct {
 	EducationLevel        string `bson:"education_level"`
 	EducationField        string `bson:"education_field"`
 	ProgrammingExperience string `bson:"programming_experience"`
@@ -30,26 +30,26 @@ type SurveySubmission struct {
 	CompanyUsesCodeReviews     bool `bson:"company_uses_code_reviews"`
 	CompanyUsesPairProgramming bool `bson:"company_uses_pair_programming"`
 	CompanyTracksTechnicalDebt bool `bson:"company_tracks_technical_debt"`
+}
 
-	ScenarioShapesQuality       int `bson:"shapes_quality"`
-	ScenarioShapesQualityChange int `bson:"shapes_change_quality"`
-
+type SurveySubmission struct {
 	ScenarioBookingQuality       int `bson:"booking_quality"`
 	ScenarioBookingQualityChange int `bson:"booking_change_quality"`
 
-	ScenarioShoppingQuality       int `bson:"shopping_quality"`
-	ScenarioShoppingQualityChange int `bson:"shopping_change_quality"`
+	ScenarioTicketsQuality       int `bson:"tickets_quality"`
+	ScenarioTicketsQualityChange int `bson:"tickets_change_quality"`
 }
 
 type Session struct {
-	ID                primitive.ObjectID `bson:"_id,omitempty"`
-	RegisterCode      string             `bson:"register_code"`
-	IgnoreCount       bool               `bson:"ignore_count"`
-	AgreementAccepted bool               `bson:"agreement_accepted"`
-	SurveyAnswers     *SurveySubmission  `bson:"survey_answers"`
-	Scenarios         []Scenario         `bson:"scenarios"`
-	StartedAt         time.Time          `bson:"started_at"`
-	EndedAt           time.Time          `bson:"ended_at"`
+	ID                primitive.ObjectID    `bson:"_id,omitempty"`
+	RegisterCode      string                `bson:"register_code"`
+	IgnoreCount       bool                  `bson:"ignore_count"`
+	AgreementAccepted bool                  `bson:"agreement_accepted"`
+	BackgroundAnswers *BackgroundSubmission `bson:"background_answers"`
+	SurveyAnswers     *SurveySubmission     `bson:"survey_answers"`
+	Scenarios         []Scenario            `bson:"scenarios"`
+	StartedAt         time.Time             `bson:"started_at"`
+	EndedAt           time.Time             `bson:"ended_at"`
 }
 
 func (d *Database) GetSessions(code string) ([]Session, error) {
@@ -185,6 +185,25 @@ func (d *Database) SaveSurveyAnswers(id primitive.ObjectID, submission SurveySub
 		bson.M{"_id": id},
 		bson.D{
 			{"$set", bson.D{{"survey_answers", submission}}}, //nolint
+		},
+	)
+	if err != nil {
+		return err
+	}
+
+	if res.ModifiedCount != 1 {
+		return fmt.Errorf("nothing modified")
+	}
+
+	return nil
+}
+
+func (d *Database) SaveBackgroundAnswers(id primitive.ObjectID, submission BackgroundSubmission) error {
+	res, err := d.client.Database("test").Collection("sessions").UpdateOne(
+		context.TODO(),
+		bson.M{"_id": id},
+		bson.D{
+			{"$set", bson.D{{"background_answers", submission}}}, //nolint
 		},
 	)
 	if err != nil {

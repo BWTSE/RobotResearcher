@@ -67,7 +67,7 @@ export default {
     submit () {
       if (this.accepted === true) {
         this.axios.post('agreement/accept').then(() => {
-          this.$router.push('/experiment/1')
+          this.$router.push('/experiment/0')
         })
       }
     },

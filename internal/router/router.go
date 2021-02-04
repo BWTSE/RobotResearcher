@@ -49,6 +49,7 @@ func (r *Router) Serve(debug bool, port string) error {
 	r.applyAgreementRoutes(api.Group("/agreement"))
 	r.applyScenarioRoutes(api.Group("/scenario"))
 	r.applySurveyRoutes(api.Group("/survey"))
+	r.applyBackgroundRoutes(api.Group("/background"))
 
 	return e.Run("0.0.0.0:" + port)
 }
