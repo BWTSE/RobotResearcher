@@ -42,6 +42,7 @@ type SurveySubmission struct {
 
 type Session struct {
 	ID                primitive.ObjectID    `bson:"_id,omitempty"`
+	FirstID           string                `bson:"first_id"`
 	RegisterCode      string                `bson:"register_code"`
 	IgnoreCount       bool                  `bson:"ignore_count"`
 	AgreementAccepted bool                  `bson:"agreement_accepted"`
@@ -86,12 +87,13 @@ func (d *Database) GetSession(id primitive.ObjectID) (Session, error) {
 	return session, nil
 }
 
-func (d *Database) CreateSession(code string, scenarios []Scenario, ignoreCount bool) (primitive.ObjectID, error) {
+func (d *Database) CreateSession(code string, scenarios []Scenario, ignoreCount bool, firstID string) (primitive.ObjectID, error) {
 	session := Session{
 		RegisterCode: code,
 		IgnoreCount:  ignoreCount,
 		Scenarios:    scenarios,
 		StartedAt:    time.Now(),
+		FirstID:      firstID,
 	}
 
 	cursor, err := d.client.Database("test").Collection("sessions").InsertOne(context.TODO(), session)

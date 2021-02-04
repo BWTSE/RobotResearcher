@@ -16,8 +16,9 @@
           v-model="code"
           :error-messages="errorMessage"
         ></v-text-field>
+        <v-checkbox v-model="cookie" label="I accept that this site stores a cookie on my computer. The cookie is used to anonymously identify the submission."></v-checkbox>
         <v-btn
-          :disabled="processing || code === ''"
+          :disabled="processing || code === '' || !cookie"
           :loading="processing"
           @click="login"
           type="submit"
@@ -33,6 +34,7 @@ export default {
   data () {
     return {
       code: '',
+      cookie: false,
       rememberMe: true,
       processing: false,
       errorMessage: '',
@@ -71,4 +73,7 @@ export default {
 </script>
 
 <style scoped lang="scss">
+  .v-form {
+    max-width: 500px;
+  }
 </style>

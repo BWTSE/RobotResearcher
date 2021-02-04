@@ -2,6 +2,7 @@ package router
 
 import (
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -106,7 +107,12 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			sequence = r.scenarioService.GetSequence()
 		}
 
-		id, err := r.database.CreateSession(request.Code, sequence, ignoreCount)
+		firstID, err := c.Cookie("firstID")
+		if err != nil {
+			firstID = ""
+		}
+
+		id, err := r.database.CreateSession(request.Code, sequence, ignoreCount, firstID)
 		if err != nil {
 			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
 				"error": err.Error(),
@@ -114,7 +120,14 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 
 			return
 		}
+
+		dev := os.Getenv("DEVELOPMENT") == "true"
+
+		if firstID == "" {
+			firstID = id.Hex()
+		}
 		c.Header("Authorization", id.Hex())
+		c.SetCookie("firstID", firstID, int(time.Hour*24*14), "", c.Request.URL.Hostname(), !dev, !dev)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "ok",
 		})
