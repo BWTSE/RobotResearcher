@@ -157,9 +157,31 @@ func (r *Router) applyAuthRoutes(rg *gin.RouterGroup) {
 			scenarioNames = append(scenarioNames, scenario.Name)
 		}
 
+		stage := "agreement"
+		if s.AgreementAccepted {
+			stage = "background"
+		}
+		if s.BackgroundAnswers != nil {
+			stage = "experiment"
+		}
+		submittedScenarios := 0
+		for _, scenario := range s.Scenarios {
+			if !scenario.SubmittedAt.IsZero() {
+				submittedScenarios++
+			}
+		}
+		if submittedScenarios == len(s.Scenarios) {
+			stage = "survey"
+		}
+		if s.SurveyAnswers != nil {
+			stage = "farewell"
+		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"id":             s.ID.Hex(),
 			"scenario_order": scenarioNames,
+			"stage":          stage,
+			"experiment":     submittedScenarios + 1,
 		})
 	})
 }

@@ -72,6 +72,27 @@ export default {
       }
     },
   },
+  mounted () {
+    this.$auth.fetch().then((a) => {
+      switch (a.data.stage) {
+        case 'agreement':
+          // this.$router.push('/intro')
+          break
+        case 'background':
+          this.$router.push('/experiment/0')
+          break
+        case 'experiment':
+          this.$router.push('/experiment/' + a.data.experiment)
+          break
+        case 'survey':
+          this.$router.push('/experiment/3')
+          break
+        default:
+          this.$router.push('/farewell')
+          break
+      }
+    })
+  },
 }
 </script>
 

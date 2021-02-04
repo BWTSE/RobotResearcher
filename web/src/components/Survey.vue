@@ -90,6 +90,23 @@ export default {
   mounted () {
     this.$auth.fetch().then((a) => {
       Vue.set(this, 'scenarios', a.data.scenario_order.map((name) => name.charAt(0).toUpperCase() + name.slice(1)))
+
+      switch (a.data.stage) {
+        case 'agreement':
+          this.$router.push('/intro')
+          break
+        case 'background':
+          this.$router.push('/experiment/0')
+          break
+        case 'experiment':
+          this.$router.push('/experiment/' + a.data.experiment)
+          break
+        case 'survey':
+          break
+        default:
+          this.$router.push('/farewell')
+          break
+      }
     })
   },
   methods: {
