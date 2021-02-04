@@ -19,13 +19,13 @@
         ></v-text-field>
         <v-text-field
           v-model="surveyAnswers.ProgrammingExperience"
-          label="How many years of programming experience do you have?"
+          label="How many years of professional programming experience do you have?"
           placeholder="e.g. 1, 2, 3..."
           suffix="years"
         ></v-text-field>
         <v-text-field
           v-model="surveyAnswers.JavaExperience"
-          label="How many years of experience do you have working professionally with java?"
+          label="How many years of professional experience do you have working with java?"
           placeholder="e.g. 1, 2, 3..."
           suffix="years"
         ></v-text-field>
