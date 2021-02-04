@@ -1,6 +1,6 @@
 <template>
   <v-row class="fill-height">
-    <v-col cols="2" class="list-col fill-height">
+    <v-col class="list-col fill-height">
       <v-list dense>
         <div class="helper">
           Right click on files to add new, rename and delete. Refreshing the page will reset the whole task.
@@ -278,6 +278,7 @@ export default {
 .list-col {
   overflow-y: auto;
   min-width: 200px;
+  max-width: 300px;
 }
 .row {
   margin: 0;

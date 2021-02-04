@@ -2,14 +2,18 @@
   <v-row
     class="root"
   >
-    <v-col cols="8" class="code fill-height">
+    <v-col class="code fill-height">
       <multi-file-editor
         :files="files"
         @update:file="({file, content}) => files[file] = content"
         @delete:file="({file}) => delete files[file]"
       ></multi-file-editor>
     </v-col>
-    <v-col class="util fill-height d-flex justify-space-between flex-column">
+    <v-col class="desc-toggler" @click="utilVisible = !utilVisible">
+      <v-icon v-if="utilVisible">mdi-arrow-expand-right</v-icon>
+      <v-icon v-else>mdi-arrow-expand-left</v-icon>
+    </v-col>
+    <v-col :class="{'hidden': !utilVisible}" class="util fill-height d-flex justify-space-between flex-column">
       <div
         v-html="htmlinfo"
       >
@@ -86,6 +90,7 @@ export default {
       runOutput: '',
       runCode: null,
       nextDialog: false,
+      utilVisible: true,
     }
   },
   props: {
@@ -167,12 +172,28 @@ export default {
   .util {
     padding-right: 24px;
     overflow-y: auto;
+    max-width: 700px;
     > * {
       margin-bottom: 30px;
     }
+    &.hidden {
+      max-width: 0px;
+      opacity: 0;
+    }
+    transition: all ease-in-out .5s;
   }
   .code {
     padding: 0;
+  }
+}
+.desc-toggler {
+  max-width: 12px;
+  background-color: lightgray;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  &:hover {
+    background-color: darkgray;
   }
 }
 </style>
