@@ -15,7 +15,7 @@
             Welcome and thanks for participating in our experiment.
           </h3>
           <p>
-            The experiment aims to investigate the evolution of software projects by asking the participants to complete tasks in preexisting projects. There will be three (3) tasks to be performed followed by a short survey. Your participation is voluntary and you are free to drop out of the experiment at any time.
+            The experiment aims to investigate the evolution of software projects by asking the participants to complete tasks in preexisting projects. There will be two (2) tasks to be performed followed by a short survey. You will also be asked to answer some background questions before you start. Your participation is voluntary and you are free to drop out of the experiment at any time.
             <strong>We do greatly appreciate if you complete the whole experiment</strong> so that we may acquire some useful results.
           </p>
           <p>
