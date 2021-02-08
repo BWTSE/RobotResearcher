@@ -22,7 +22,7 @@ export default {
         mode: 'ace/mode/java',
         theme: 'ace/theme/monokai',
         fontSize: '12pt',
-        tabSize: '2',
+        tabSize: '4',
         useSoftTabs: false,
         autoScrollEditorIntoView: false,
         scrollPastEnd: false,
