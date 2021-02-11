@@ -28,6 +28,11 @@
         >
           Run Code
         </v-btn>
+        <v-progress-linear
+          indeterminate
+          color="blue"
+          :active="loading"
+        ></v-progress-linear>
         <Output :code="runOutput + 'Exit code: ' + runCode"></Output>
       </div>
       <div class="d-flex justify-space-between">
