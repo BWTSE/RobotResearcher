@@ -167,7 +167,7 @@ func (d *Database) CommitScenario(id primitive.ObjectID, n int, submission map[s
 		bson.M{"_id": id},
 		bson.D{
 			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".submitted_at", time.Now()}}}, //nolint
-			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".submitted", submission}}}, //nolint
+			{"$set", bson.D{{"scenarios." + strconv.Itoa(n) + ".submitted", submission}}},    //nolint
 		},
 	)
 	if err != nil {

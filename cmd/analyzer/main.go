@@ -56,6 +56,9 @@ func main() {
 			}
 
 			err = os.MkdirAll(dir, 0775)
+			if err == nil { // dir exists
+				panic(err)
+			}
 
 			for name, content := range scenario.Submitted {
 				if strings.Contains(name, string(os.PathSeparator)) {
