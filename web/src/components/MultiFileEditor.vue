@@ -7,7 +7,7 @@
         </div>
         <v-list-item-group v-model="selected" color="primary" mandatory>
           <v-list-item
-            v-for="name in Object.keys(files)"
+            v-for="name in Object.keys(files).sort()"
             :key="name"
             :value="name"
             @contextmenu="(e) => openContextMenu(name, e)"
