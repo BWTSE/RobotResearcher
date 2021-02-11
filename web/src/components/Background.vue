@@ -51,6 +51,11 @@
           label="tracked technical debt."
           v-model="surveyAnswers.CompanyTracksTechnicalDebt"
         ></v-select>
+        <v-select
+          :items="[{text: 'Yes', value: true}, {text: 'No', value: false}]"
+          label="had established coding standards."
+          v-model="surveyAnswers.CompanyHasCodingStandards"
+        ></v-select>
         <v-row>
           <v-spacer></v-spacer>
           <v-btn
@@ -81,6 +86,7 @@ export default {
         CompanyUsesCodeReviews: null,
         CompanyUsesPairProgramming: null,
         CompanyTracksTechnicalDebt: null,
+        CompanyHasCodingStandards: null,
       },
       edLevels: [
         'None',

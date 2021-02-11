@@ -30,6 +30,7 @@ type BackgroundSubmission struct {
 	CompanyUsesCodeReviews     bool `bson:"company_uses_code_reviews"`
 	CompanyUsesPairProgramming bool `bson:"company_uses_pair_programming"`
 	CompanyTracksTechnicalDebt bool `bson:"company_tracks_technical_debt"`
+	CompanyHasCodingStandards  bool `bson:"company_has_coding_standards"`
 }
 
 type SurveySubmission struct {
