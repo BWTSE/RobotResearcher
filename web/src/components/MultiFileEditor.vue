@@ -47,6 +47,7 @@
                 label="File name"
                 suffix=".java"
                 v-model="newFileName"
+                ref="newFileInput"
                 @keyup.enter="addFile()"
                 :error-messages="newFileError"
               ></v-text-field>
@@ -74,8 +75,10 @@
               <v-text-field
                 label="New name"
                 suffix=".java"
+                ref="renameFileInput"
                 v-model="renameFileName"
                 @keyup.enter="renameFile()"
+                autofocus
                 :error-messages="renameFileError"
               ></v-text-field>
               <v-btn
@@ -196,6 +199,24 @@ export default {
     files () {
       if (this.files[this.selected] === undefined) {
         this.selected = defaultFile
+      }
+    },
+    pendingRename (val) {
+      if (val != null) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.$refs.renameFileInput.focus()
+          }, 0)
+        })
+      }
+    },
+    newFileDialog (val) {
+      if (val) {
+        this.$nextTick(() => {
+          setTimeout(() => {
+            this.$refs.newFileInput.focus()
+          }, 0)
+        })
       }
     },
   },
