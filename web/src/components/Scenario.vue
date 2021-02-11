@@ -7,6 +7,7 @@
         :files="files"
         @update:file="({file, content}) => files[file] = content"
         @delete:file="({file}) => delete files[file]"
+        @save="run"
       ></multi-file-editor>
     </v-col>
     <v-col class="desc-toggler" @click="utilVisible = !utilVisible">

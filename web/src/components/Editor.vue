@@ -1,5 +1,5 @@
 <template>
-  <div class="editor" >
+  <div class="editor" @keydown.ctrl.83.prevent.stop="$emit('save')">
     <div :id="_uid">
     </div>
   </div>

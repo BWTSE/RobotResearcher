@@ -115,6 +115,7 @@
       <editor
         :code="files[selected]"
         @update:code="edited"
+        @save="$emit('save')"
       ></editor>
     </v-col>
   </v-row>
