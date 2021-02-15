@@ -60,7 +60,7 @@
           <v-spacer></v-spacer>
           <v-btn
             color="primary"
-            @click="submit"
+            @click.prevent.stop="submit"
             :disabled="loading || invalid"
           >Submit</v-btn>
         </v-row>

@@ -20,7 +20,7 @@
         <v-btn
           :disabled="processing || code === '' || !cookie"
           :loading="processing"
-          @click="login"
+          @click.prevent.stop="login"
           type="submit"
         >Enter</v-btn>
       </v-form>

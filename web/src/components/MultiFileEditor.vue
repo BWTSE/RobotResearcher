@@ -53,7 +53,7 @@
               ></v-text-field>
               <v-btn
                 :disabled="newFileError != null || newFileName === ''"
-                @click="addFile()"
+                @click.prevent.stop="addFile()"
                 color="primary"
               >Create</v-btn>
             </v-form>
@@ -83,7 +83,7 @@
               ></v-text-field>
               <v-btn
                 :disabled="renameFileError != null || renameFileName === '' || normalizeFileName(renameFileName) === pendingRename"
-                @click="renameFile()"
+                @click.prevent.stop="renameFile()"
                 color="primary"
               >Rename</v-btn>
             </v-form>
