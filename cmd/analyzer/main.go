@@ -56,7 +56,7 @@ func main() {
 			}
 
 			err = os.MkdirAll(dir, 0775)
-			if err == nil { // dir exists
+			if err != nil {
 				panic(err)
 			}
 
@@ -145,6 +145,7 @@ func main() {
 				cd,
 				"sonar-scanner",
 				fmt.Sprintf("-Dsonar.projectKey=%s-%s-%s", scenario.Name, debtString(scenario.HasHighDebt), session.ID.Hex()),
+				"-Dsonar.scm.exclusions.disabled=true",
 				"-Dsonar.java.binaries="+scenario.Name,
 				"-Dsonar.sources="+scenario.Name,
 			)
