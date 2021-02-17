@@ -116,7 +116,7 @@
     </v-col>
     <v-col>
       <editor
-        :code="files[selected]"
+        :file="{name: selected, code: files[selected]}"
         @update:code="edited"
         @save="$emit('save')"
       ></editor>

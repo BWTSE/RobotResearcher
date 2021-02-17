@@ -18,7 +18,7 @@ export default {
         maxLines: 1000,
         minLines: 50,
         printMargin: false,
-        value: this.code,
+        value: '',
         mode: 'ace/mode/java',
         theme: 'ace/theme/monokai',
         fontSize: '12pt',
@@ -27,17 +27,25 @@ export default {
         autoScrollEditorIntoView: false,
         scrollPastEnd: false,
       },
+      editorSessions: {},
+      currentSession: 'none',
     }
   },
   props: {
-    code: String,
+    file: Object,
   },
   watch: {
-    code (value) {
-      if (this.editor != null && this.editor.getValue() !== value) {
-        this.editor.setValue(value)
-        this.editor.clearSelection()
-      }
+    file: {
+      handler ({ name, code }) {
+        if (this.editor != null && this.editor.getValue() !== code) {
+          this.editor.setValue(code)
+          this.editor.clearSelection()
+          if (name !== this.currentSession) {
+            this.editor.getSession().getUndoManager().reset()
+          }
+        }
+      },
+      deep: true,
     },
   },
   mounted () {
