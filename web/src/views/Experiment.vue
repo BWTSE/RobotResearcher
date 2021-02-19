@@ -10,7 +10,7 @@
         {{ scenarioList[s-1] }} Task
       </v-stepper-step>
       <v-stepper-step :step="scenarios + 1">
-        Survey
+        Final (4) Questions
       </v-stepper-step>
     </v-stepper-header>
     <v-stepper-items>
