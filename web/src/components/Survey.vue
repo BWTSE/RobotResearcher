@@ -8,22 +8,22 @@
       <v-form
       >
         <span class="sliders" v-for="scenario in scenarios" :key="scenario">
-          <span>How would you rate the quality (maintainability) of the preexisting code in the <strong>{{ scenario }}</strong>
+          <span>The quality (maintainability) of the preexisting code in the <strong>{{ scenario }}</strong>
             <v-tooltip right>
               <template v-slot:activator="{on, attrs}">
                 <v-icon v-bind="attrs" v-on="on" class="infoa" tag="span" small>mdi-information</v-icon>
               </template>
               <span>{{scenarioHelp[scenario]}}</span>
             </v-tooltip>
-            task?</span>
+            task was:</span>
           <v-slider
             v-model="surveyAnswers['Scenario' + scenario + 'Quality']"
-            :tick-labels="['Very Bad', 'Bad', 'Neutral', 'Good', 'Very Good']"
+            :tick-labels="['Very Bad', 'Bad', 'Somewhat Bad', 'Neutral', 'Somewhat Good', 'Good', 'Very Good']"
             ticks
-            tick-size="5"
+            tick-size="7"
             step="1"
-            min="-2"
-            max="2"
+            min="-3"
+            max="3"
           ></v-slider>
           <span>The work I did in the <strong>{{ scenario }}</strong>
             <v-tooltip right>
@@ -32,15 +32,15 @@
               </template>
               <span>{{scenarioHelp[scenario]}}</span>
             </v-tooltip>
-             task made the quality (maintainability) of the system?</span>
+             task made the quality (maintainability) of the system:</span>
           <v-slider
             v-model="surveyAnswers['Scenario' + scenario + 'QualityChange']"
-            :tick-labels="['Much Worse', 'Worse', 'Neutral', 'Better', 'Much Better']"
+            :tick-labels="['Much Worse', 'Worse', 'Somewhat Worse', 'Neutral', 'Somewhat Better', 'Better', 'Much Better']"
             ticks
-            tick-size="5"
+            tick-size="7"
             step="1"
-            min="-2"
-            max="2"
+            min="-3"
+            max="3"
           ></v-slider>
         </span>
         <v-row>
@@ -78,7 +78,7 @@ export default {
       ],
       scenarioHelp: {
         Tickets: 'The task where you were asked to extend a buss ticket system',
-        Booking: 'The task where you were asked to implement a Cabin class',
+        Booking: 'The task where you were asked to implement a ComputerRoom class',
       },
     }
   },
