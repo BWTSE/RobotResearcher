@@ -42,13 +42,14 @@
             Create a new file
             <v-form
               align="right"
+              @submit.prevent.stop=""
             >
               <v-text-field
                 label="File name"
                 suffix=".java"
                 v-model="newFileName"
                 ref="newFileInput"
-                @keyup.enter="addFile()"
+                @keyup.enter.prevent.stop="addFile()"
                 :error-messages="newFileError"
               ></v-text-field>
               <v-btn
@@ -70,6 +71,7 @@
           <v-card-text>
             Rename {{pendingRename}}
             <v-form
+              @submit.prevent.stop=""
               align="right"
             >
               <v-text-field
@@ -77,7 +79,7 @@
                 suffix=".java"
                 ref="renameFileInput"
                 v-model="renameFileName"
-                @keyup.enter="renameFile()"
+                @keyup.enter.prevent.stop="renameFile()"
                 autofocus
                 :error-messages="renameFileError"
               ></v-text-field>

@@ -20,14 +20,7 @@
       >
       </div>
       <div>
-        <v-btn
-          color="primary"
-          @click="run"
-          width="100%"
-          :disabled="loading"
-        >
-          Run Code
-        </v-btn>
+        <h4>Run output:</h4>
         <v-progress-linear
           indeterminate
           color="blue"
@@ -36,6 +29,14 @@
         <Output :code="runOutput + 'Exit code: ' + runCode"></Output>
       </div>
       <div class="d-flex justify-space-between">
+        <v-btn
+          color="success"
+          @click="run"
+          :disabled="loading"
+          width="200px"
+        >
+          Run Code
+        </v-btn>
         <v-spacer></v-spacer>
         <v-dialog
           v-model="nextDialog"
@@ -153,6 +154,7 @@ export default {
           this.files[name] = atob(encodedContent)
         })
         this.startedAt = moment(this.scenario.started_at)
+        this.runOutput = ''
         this.loading = false
       }).catch(() => {
         this.loading = false

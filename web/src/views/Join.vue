@@ -9,6 +9,7 @@
       <v-form
         align="right"
         v-on:keydown.enter="login"
+        @submit.prevent.stop=""
       >
         <v-text-field
           prepend-icon="mdi-console-line"

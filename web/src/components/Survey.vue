@@ -6,6 +6,7 @@
   >
     <v-card class="pa-4">
       <v-form
+        @submit.prevent.stop=""
       >
         <span class="sliders" v-for="scenario in scenarios" :key="scenario">
           <span>The quality (maintainability) of the preexisting code in the <strong>{{ scenario }}</strong>

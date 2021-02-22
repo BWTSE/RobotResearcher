@@ -6,6 +6,7 @@
   >
     <v-card class="pa-4">
       <v-form
+        @submit.prevent.stop=""
       >
         <v-select
           :items="edLevels"
