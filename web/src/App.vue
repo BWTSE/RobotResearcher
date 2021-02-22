@@ -10,8 +10,20 @@
 </template>
 
 <script>
+
+import * as Sentry from '@sentry/browser'
 export default {
   name: 'App',
+  methods: {
+    openDialog () {
+      Sentry.showReportDialog({
+        eventId,
+        title: 'Aw, Snap! You broke the internet!',
+        subtitle: 'Send us an email and we will fix it.',
+        subtitle2: 'Please refresh your cache to continue (cmd+R / ctrl+R)',
+      })
+    },
+  },
 }
 </script>
 
