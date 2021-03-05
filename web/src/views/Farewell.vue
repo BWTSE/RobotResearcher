@@ -2,11 +2,27 @@
   <v-row
     justify="center"
     align="center"
-    class="fill-height"
+    class="fill-height pa-16"
   >
-    <v-card>
+    <v-card width="650">
       <v-card-title>Thank you for participating!</v-card-title>
-      <v-card-text>If you want to receive a copy of the thesis after its completion you may provide your email at: <a target="_blank" href="https://forms.gle/WJ3kXBfBYjCV35E89">https://forms.gle/WJ3kXBfBYjCV35E89</a></v-card-text>
+      <v-card-text>
+        <p>
+          If you want to receive a copy of the completed thesis or want to participate in a short follow up interview you can use the form bellow.
+        </p>
+      </v-card-text>
+      <hr>
+      <iframe
+        src="https://docs.google.com/forms/d/e/1FAIpQLSeCn-W2hhktZngqNB72XSI5a-d9N1awwuldXkXlm1gZyO7tVQ/viewform?embedded=true&hl=en"
+        width="640"
+        height="1100"
+        seamless
+        frameborder="0"
+        marginheight="0"
+        marginwidth="0"
+      >
+        Läser in...
+      </iframe>
     </v-card>
   </v-row>
 </template>
