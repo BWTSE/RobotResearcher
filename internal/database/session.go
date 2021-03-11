@@ -54,8 +54,8 @@ type Session struct {
 	EndedAt           time.Time             `bson:"ended_at"`
 }
 
-func (d *Database) GetSessions(code string) ([]Session, error) {
-	cursor, err := d.client.Database("test").Collection("sessions").Find(context.TODO(), bson.M{"register_code": code})
+func (d *Database) GetRealSessions() ([]Session, error) {
+	cursor, err := d.client.Database("test").Collection("sessions").Find(context.TODO(), bson.M{"ignore_count": false})
 	if err != nil {
 		return nil, err
 	}

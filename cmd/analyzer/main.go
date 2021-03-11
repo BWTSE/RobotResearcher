@@ -3,29 +3,152 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"os/exec"
 	"path"
 	"strings"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"sidus.io/robotresearcher/internal/database"
 )
 
-func main() {
+var rootDir string = "submissions"
+
+func structToFile(a interface{}, file string) error {
+	data, err := json.MarshalIndent(a, "", "    ")
+	if err != nil {
+		return errors.Wrap(err, "could not marshal struct")
+	}
+
+	err = os.WriteFile(file, data, 0644)
+	if err != nil {
+		return errors.Wrap(err, "could not write file")
+	}
+
+	return nil
+}
+
+type Session struct {
+	SignupCode        string               `json:"signup_code"`
+	BackgroundAnswers BackgroundSubmission `json:"background_answers"`
+	RepeatOf          string               `json:"repeat_of"`
+}
+
+type BackgroundSubmission struct {
+	EducationLevel string `json:"education_level"`
+	EducationField string `json:"education_field"`
+
+	ProgrammingExperience string `json:"work_experience"`
+	JavaExperience        string `json:"work_experience_java"`
+
+	WorkDomain string `json:"work_domain"`
+
+	CompanyUsesCodeReviews     bool `json:"workplace_peer_review"`
+	CompanyUsesPairProgramming bool `json:"workplace_pair_programming"`
+	CompanyTracksTechnicalDebt bool `json:"workplace_td_tracking"`
+	CompanyHasCodingStandards  bool `json:"workplace_coding_standards"`
+}
+
+type SurveySubmission struct {
+	ScenarioQuality   int `json:"quality_pre_task"`
+	SubmissionQuality int `json:"quality_post_task"`
+}
+
+type Submisison struct {
+	HighDebtVersion   bool              `json:"high_debt_version"`
+	Time              time.Duration     `json:"time"`
+	Order             int               `json:"order"`
+	ReflectionAnswers *SurveySubmission `json:"reflection_answers"`
+}
+
+type SubmissionInspection struct {
+	TaskCompletion string `json:"task_completion"`
+
+	ReusedLogicConstructor bool `json:"reused_logic_constructor"`
+	ReusedLogicValidation  bool `json:"reused_logic_validation"`
+	ReusedLogicEquals      bool `json:"reused_logic_equals"`
+	ReusedLogicHashcode    bool `json:"reused_logic_hashcode"`
+
+	CopiedVariableNamesAll []string `json:"copied_variable_names_all"`
+	CopiedVariableNamesBad []string `json:"copied_variable_names_bad"`
+	NewVariableNamesAll    []string `json:"new_variable_names_all"`
+	NewVariableNamesBad    []string `json:"new_variable_names_bad"`
+	EditedVariableNamesAll []string `json:"edited_variable_names_all"`
+	EditedVariableNamesBad []string `json:"edited_variable_names_bad"`
+
+	HasEquals   bool `json:"has_equals"`
+	HasHashCode bool `json:"has_hashcode"`
+
+	DocumentationState string `json:"documentation_state"`
+
+	LargeStructureChange bool `json:"large_structure_change"`
+
+	Done bool `json:"inspection_done"`
+}
+
+type SessionInspection struct {
+	WorkExperience     float64 `json:"work_experience"`
+	WorkExperienceJava float64 `json:"work_experience_java"`
+
+	Ignore bool `json:"ignore"`
+
+	Done bool `json:"inspection_done"`
+}
+
+type Issue struct {
+	Rule     string `json:"rule"`
+	File     string `json:"file"`
+	Severity string `json:"severity"`
+	Type     string `json:"type"`
+	Message  string `json:"message"`
+	Line     int    `json:"line"`
+}
+
+type Rule struct {
+	Count          int    `json:"count"`
+	Severity       string `json:"severity"`
+	Type           string `json:"type"`
+	ExampleMessage string `json:"example_message"`
+	Ignored        bool   `json:"ignored"`
+	IgnoredComment string `json:"ignored_comment"`
+}
+
+type Groupings struct {
+	EducationFields map[string]string `json:"education_fields"`
+	WorkDomains     map[string]string `json:"work_domains"`
+}
+
+func fileExists(path string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return false
+		}
+
+		panic(err)
+	}
+
+	f.Close()
+
+	return true
+}
+
+func download() error {
 	db, err := database.NewDatabase(os.Getenv("DB_URI"))
 	if err != nil {
-		fmt.Println(fmt.Errorf("while creating code service: %w", err))
-		os.Exit(1)
+		return fmt.Errorf("while creating code service: %w", err)
 	}
 	defer db.Close()
 
-	sessions, err := db.GetSessions("our-hero")
+	sessions, err := db.GetRealSessions()
 	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+		return errors.Wrap(err, "while getting sessions")
 	}
 
 	fmt.Printf("Total sessions found: %d\n", len(sessions))
@@ -33,33 +156,67 @@ func main() {
 	var startedSessions []database.Session
 
 	for _, session := range sessions {
-		if !session.Scenarios[0].SubmittedAt.IsZero() {
+		if !session.Scenarios[0].StartedAt.IsZero() {
 			startedSessions = append(startedSessions, session)
 		}
 	}
 
-	fmt.Printf("After filtering out useless: %d\n", len(startedSessions))
+	fmt.Printf("After filtering out not started: %d\n", len(startedSessions))
 
 	for _, session := range startedSessions {
-		for _, scenario := range session.Scenarios {
+		sessionDir := path.Join(rootDir, session.ID.Hex())
+
+		if (session.Scenarios[0].SubmittedAt.IsZero() || session.Scenarios[1].SubmittedAt.IsZero()) &&
+			time.Since(session.StartedAt) < 24*time.Hour {
+			fmt.Printf("download skipped (session was opened less than 24 hours ago and not yet submitted): %s\n", session.ID.Hex())
+			continue
+		}
+
+		if fileExists(sessionDir) { // dir exists
+			fmt.Printf("download skipped (already exists): %s\n", session.ID.Hex())
+			continue
+		}
+
+		fmt.Printf("download: %s\n", sessionDir)
+
+		err = os.Mkdir(sessionDir, 0775)
+		if err != nil {
+			return errors.Wrap(err, "could not create session directory")
+		}
+
+		err = structToFile(Session{
+			SignupCode: session.RegisterCode,
+			BackgroundAnswers: BackgroundSubmission{
+				EducationLevel:             session.BackgroundAnswers.EducationLevel,
+				EducationField:             session.BackgroundAnswers.EducationField,
+				ProgrammingExperience:      session.BackgroundAnswers.ProgrammingExperience,
+				JavaExperience:             session.BackgroundAnswers.JavaExperience,
+				WorkDomain:                 session.BackgroundAnswers.WorkDomain,
+				CompanyUsesCodeReviews:     session.BackgroundAnswers.CompanyUsesCodeReviews,
+				CompanyUsesPairProgramming: session.BackgroundAnswers.CompanyUsesPairProgramming,
+				CompanyTracksTechnicalDebt: session.BackgroundAnswers.CompanyTracksTechnicalDebt,
+				CompanyHasCodingStandards:  session.BackgroundAnswers.CompanyHasCodingStandards,
+			},
+			RepeatOf: session.FirstID,
+		}, path.Join(sessionDir, ".session.json"))
+		if err != nil {
+			return err
+		}
+
+		for i, scenario := range session.Scenarios {
 			if scenario.SubmittedAt.IsZero() {
 				continue
 			}
 
-			srcDir := path.Join("submissions", session.ID.Hex())
-			dir := path.Join(srcDir, scenario.Name)
+			scenarioDir := path.Join(sessionDir, scenario.Name)
+			srcDir := path.Join(scenarioDir, ".submission", scenario.Name)
 
-			_, err := ioutil.ReadDir(dir)
-			if err == nil { // dir exists
-				fmt.Printf("skipping %s \n", dir)
-				continue
-			}
-
-			err = os.MkdirAll(dir, 0775)
+			err = os.MkdirAll(srcDir, 0775)
 			if err != nil {
-				panic(err)
+				return errors.Wrap(err, "could not create submission directory")
 			}
 
+			// save all submitted files
 			for name, content := range scenario.Submitted {
 				if strings.Contains(name, string(os.PathSeparator)) {
 					break
@@ -79,96 +236,639 @@ func main() {
 					break
 				}
 
-				err = ioutil.WriteFile(path.Join(dir, name), code, 0644)
+				code = []byte(strings.ToValidUTF8(string(code), "?"))
+
+				err = ioutil.WriteFile(path.Join(srcDir, name), code, 0644)
 				if err != nil {
 					fmt.Println(err)
 					break
 				}
 			}
 
-			for file := range scenario.Submitted {
-				cmd := exec.Command(
-					"javac",
-					path.Join(scenario.Name, file),
-				)
-				cmd.Dir = srcDir
+			var reflectionAnswers SurveySubmission
 
-				out, err := cmd.CombinedOutput()
-				if err != nil {
-					_, ok := err.(*exec.ExitError)
-					if ok {
-						err := ioutil.WriteFile(path.Join(dir, "error.compiletime"), out, 0644)
-						if err != nil {
-							fmt.Println(err)
-						}
-					} else {
-						fmt.Println(err)
-						break
-					}
+			if session.SurveyAnswers != nil {
+				if scenario.Name == "tickets" {
+					reflectionAnswers.ScenarioQuality = session.SurveyAnswers.ScenarioTicketsQuality
+					reflectionAnswers.SubmissionQuality = session.SurveyAnswers.ScenarioTicketsQualityChange
+				} else if scenario.Name == "booking" {
+					reflectionAnswers.ScenarioQuality = session.SurveyAnswers.ScenarioBookingQuality
+					reflectionAnswers.SubmissionQuality = session.SurveyAnswers.ScenarioBookingQualityChange
+				} else {
+					panic("very fatal")
 				}
 			}
 
-			cd, cancel := context.WithTimeout(context.Background(), time.Second*15)
-			defer cancel()
+			err = structToFile(Submisison{
+				HighDebtVersion:   scenario.HasHighDebt,
+				Time:              scenario.SubmittedAt.Sub(scenario.StartedAt),
+				Order:             i,
+				ReflectionAnswers: &reflectionAnswers,
+			}, path.Join(scenarioDir, ".submission.json"))
+			if err != nil {
+				return err
+			}
+		}
+	}
 
-			cmd := exec.CommandContext(
-				cd,
-				"java",
-				"-Djava.security.manager",
-				//			"-Djava.security.debug=all",
-				//			"-Djava.security.policy==./../../untrusted.policy",
-				"-Xmx15M",
-				scenario.Name+".Main",
+	return nil
+}
+
+func forEachSession(f func(string, Session) error) error {
+	files, err := os.ReadDir(rootDir)
+	if err != nil {
+		return err
+	}
+
+	for _, file := range files {
+		if file.IsDir() && !strings.HasPrefix(file.Name(), ".") {
+			sessionPath := path.Join(rootDir, file.Name())
+
+			sessionData, err := ioutil.ReadFile(path.Join(sessionPath, ".session.json"))
+			if err != nil {
+				return err
+			}
+
+			var session Session
+
+			err = json.Unmarshal(sessionData, &session)
+			if err != nil {
+				return err
+			}
+
+			err = f(sessionPath, session)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func forEachSubmission(f func(string, Session, Submisison) error) error {
+	return forEachSession(func(sessionPath string, session Session) error {
+		for _, submissionName := range []string{"booking", "tickets"} {
+			submissionPath := path.Join(sessionPath, submissionName)
+
+			if !fileExists(submissionPath) {
+				continue
+			}
+
+			submissionData, err := ioutil.ReadFile(path.Join(submissionPath, ".submission.json"))
+			if err != nil {
+				return err
+			}
+
+			var submission Submisison
+			err = json.Unmarshal(submissionData, &submission)
+			if err != nil {
+				return err
+			}
+
+			err = f(submissionPath, session, submission)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func diff() error {
+	return forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+		if fileExists(path.Join(submissionPath, ".diff")) || fileExists(path.Join(submissionPath, ".diff.error")) {
+			fmt.Printf("diff skipped: %s\n", submissionPath)
+			return nil
+		}
+		cmd := exec.Command(
+			"diff",
+			"-rdBEZN",
+			path.Join(
+				"..",
+				"..",
+				"..",
+				"Scenarios",
+				path.Base(submissionPath),
+				debtString(submisison.HighDebtVersion)+"_debt",
+				path.Base(submissionPath),
+			),
+			path.Join(".submission", path.Base(submissionPath)),
+		)
+		cmd.Dir = submissionPath
+
+		fmt.Printf("diff: %s\n", submissionPath)
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			exitCodeError, ok := err.(*exec.ExitError)
+			if ok {
+				if exitCodeError.ExitCode() == 1 {
+					err = ioutil.WriteFile(path.Join(submissionPath, ".diff"), out, 0644)
+					if err != nil {
+						return err
+					}
+				} else {
+					err := ioutil.WriteFile(
+						path.Join(submissionPath, ".diff.error"),
+						[]byte(fmt.Sprintf(
+							"exit code: %d\n%s",
+							exitCodeError.ExitCode(),
+							string(out),
+						)),
+						0644,
+					)
+					if err != nil {
+						return err
+					}
+				}
+			} else {
+				return err
+			}
+		} else {
+			err = ioutil.WriteFile(path.Join(submissionPath, ".diff"), out, 0644)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func compile() error {
+	return forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+		srcDir := path.Join(submissionPath, ".submission", path.Base(submissionPath))
+
+		if fileExists(path.Join(submissionPath, ".out")) || fileExists(path.Join(submissionPath, ".compilation.error")) {
+			fmt.Printf("compilation skipped (.out or .compilation.error present): %s\n", submissionPath)
+			return nil
+		}
+
+		fmt.Printf("compilation: %s\n", submissionPath)
+
+		files, err := ioutil.ReadDir(srcDir)
+		if err != nil {
+			return err
+		}
+
+		for _, file := range files {
+			if !strings.HasSuffix(file.Name(), ".java") {
+				continue
+			}
+
+			cmd := exec.Command(
+				"javac",
+				"-d", "../.out",
+				path.Join(path.Base(submissionPath), file.Name()),
 			)
-			cmd.Dir = srcDir
+			cmd.Dir = path.Join(submissionPath, ".submission")
 
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				_, ok := err.(*exec.ExitError)
+				exitCodeError, ok := err.(*exec.ExitError)
 				if ok {
-					err := ioutil.WriteFile(path.Join(dir, "error.runtime"), out, 0644)
+					err := ioutil.WriteFile(
+						path.Join(submissionPath, ".compilation.error"),
+						[]byte(fmt.Sprintf(
+							"exit code: %d\n%s",
+							exitCodeError.ExitCode(),
+							string(out),
+						)),
+						0644,
+					)
 					if err != nil {
-						fmt.Println(err)
+						return err
 					}
+
+					return nil
 				} else {
-					fmt.Println(err)
-					break
-				}
-			} else {
-				err = ioutil.WriteFile(path.Join(dir, "output"), out, 0644)
-				if err != nil {
-					fmt.Println(err)
+					return err
 				}
 			}
+		}
 
-			cmd = exec.CommandContext(
-				cd,
-				"sonar-scanner",
-				fmt.Sprintf("-Dsonar.projectKey=%s-%s-%s", scenario.Name, debtString(scenario.HasHighDebt), session.ID.Hex()),
-				"-Dsonar.scm.exclusions.disabled=true",
-				"-Dsonar.java.binaries="+scenario.Name,
-				"-Dsonar.sources="+scenario.Name,
-			)
-			cmd.Dir = srcDir
+		return nil
+	})
+}
 
-			out, err = cmd.CombinedOutput()
+func execution() error {
+	return forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
+		defer cancel()
+
+		if fileExists(path.Join(submissionPath, ".execution")) || fileExists(path.Join(submissionPath, ".execution.error")) {
+			fmt.Printf("execution skipped (exection or execution.error already exists): %s\n", submissionPath)
+			return nil
+		}
+
+		if fileExists(path.Join(submissionPath, ".compilation.error")) {
+			fmt.Printf("execution skipped (compilation failed): %s\n", submissionPath)
+			return nil
+		}
+
+		if !fileExists(path.Join(submissionPath, ".compilation.error")) && !fileExists(path.Join(submissionPath, ".out")) {
+			return errors.New("must compile before execution")
+		}
+
+		fmt.Printf("execution: %s\n", submissionPath)
+
+		cmd := exec.CommandContext(
+			ctx,
+			"java",
+			"-Djava.security.manager",
+			//			"-Djava.security.debug=all",
+			//			"-Djava.security.policy==./../../untrusted.policy",
+			"-Xmx15M",
+			path.Base(submissionPath)+".Main",
+		)
+		cmd.Dir = path.Join(submissionPath, ".out")
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			exitCodeError, ok := err.(*exec.ExitError)
+			if ok {
+				err := ioutil.WriteFile(
+					path.Join(submissionPath, ".execution.error"),
+					[]byte(fmt.Sprintf(
+						"exit code: %d\n%s",
+						exitCodeError.ExitCode(),
+						string(out),
+					)),
+					0644,
+				)
+				if err != nil {
+					return err
+				}
+			} else {
+				return err
+			}
+		} else {
+			err = ioutil.WriteFile(path.Join(submissionPath, ".execution"), out, 0644)
 			if err != nil {
-				_, ok := err.(*exec.ExitError)
-				if ok {
-					err := ioutil.WriteFile(path.Join(dir, "error.sonar"), out, 0644)
-					if err != nil {
-						fmt.Println(err)
-					}
-				} else {
-					fmt.Println(err)
-					break
+				return err
+			}
+		}
+		return nil
+	})
+}
+
+func scan() error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+		sessionPath, submissionName := path.Split(submissionPath)
+
+		if !fileExists(path.Join(submissionPath, ".out")) && !fileExists(path.Join(submissionPath, ".compilation.error")) {
+			return errors.New("must compile before scan")
+		}
+
+		if fileExists(path.Join(submissionPath, ".compilation.error")) {
+			fmt.Printf("scanning skipped (was not compiled successfully): %s\n", submissionPath)
+			return nil
+		}
+
+		if fileExists(path.Join(submissionPath, ".sonarscanner")) || fileExists(path.Join(submissionPath, ".sonarscanner.error")) {
+			fmt.Printf("scanning skipped (.sonarscanner or .sonarscanner.error present): %s\n", submissionPath)
+			return nil
+		}
+
+		fmt.Printf("scanning: %s\n", submissionPath)
+
+		cmd := exec.Command(
+			"sonar-scanner",
+			fmt.Sprintf("-Dsonar.projectKey=%s-%s-%s", path.Base(submissionPath), debtString(submission.HighDebtVersion), path.Base(sessionPath)),
+			"-Dsonar.scm.exclusions.disabled=true",
+			"-Dsonar.java.binaries="+path.Join(".out", submissionName),
+			"-Dsonar.sources="+path.Join(".submission", submissionName),
+		)
+		cmd.Dir = path.Join(submissionPath)
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			exitCodeError, ok := err.(*exec.ExitError)
+			if ok {
+				err := ioutil.WriteFile(
+					path.Join(submissionPath, ".sonarscanner.error"),
+					[]byte(fmt.Sprintf(
+						"exit code: %d\n%s",
+						exitCodeError.ExitCode(),
+						string(out),
+					)),
+					0644,
+				)
+				if err != nil {
+					return err
 				}
 			} else {
-				err = ioutil.WriteFile(path.Join(dir, "output.sonar"), out, 0644)
-				if err != nil {
-					fmt.Println(err)
-				}
+				return err
 			}
+		} else {
+			err = ioutil.WriteFile(path.Join(submissionPath, ".sonarscanner"), out, 0644)
+			if err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
+func issues() error {
+	client := http.DefaultClient
+
+	return forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+		if fileExists(path.Join(submissionPath, ".issues.json")) || fileExists(path.Join(submissionPath, ".issues.error")) {
+			fmt.Printf("issues skipped (.issues.json or .issues.error present): %s\n", submissionPath)
+			return nil
+		}
+
+		if !fileExists(path.Join(submissionPath, ".sonarscanner")) {
+			fmt.Printf("issues skipped (no scan output): %s\n", submissionPath)
+			return nil
+		}
+
+		fmt.Printf("issues: %s\n", submissionPath)
+
+		sessionPath, _ := path.Split(submissionPath)
+
+		projectKey := fmt.Sprintf("%s-%s-%s", path.Base(submissionPath), debtString(submission.HighDebtVersion), path.Base(sessionPath))
+
+		resp, err := client.Get(fmt.Sprintf("https://sonarqube.sidus.io/api/issues/search?componentKeys=%s&ps=500&p=1", projectKey))
+		if err != nil {
+			return err
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != 200 {
+			bytes, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				return err
+			}
+
+			err = ioutil.WriteFile(
+				path.Join(submissionPath, ".issues.error"),
+				[]byte(fmt.Sprintf(
+					"status code: %d\n%s",
+					resp.StatusCode,
+					string(bytes),
+				)),
+				0644,
+			)
+
+			return err
+		}
+
+		var response struct {
+			TotalItems int `json:"total"`
+			SentItems  int `json:"ps"`
+			Issues     []struct {
+				Rule      string `json:"rule"`
+				Component string `json:"component"`
+				Message   string `json:"message"`
+				Severity  string `json:"severity"`
+				Type      string `json:"type"`
+				Line      int    `json:"line"`
+			} `json:"issues"`
+		}
+
+		dec := json.NewDecoder(resp.Body)
+
+		err = dec.Decode(&response)
+		if err != nil {
+			return err
+		}
+
+		if response.SentItems < response.TotalItems {
+			return errors.New("page size exceeded")
+		}
+
+		var issuesToSave []Issue
+		for _, issue := range response.Issues {
+			componentParts := strings.Split(issue.Component, ":")
+			if len(componentParts) != 2 {
+				return errors.New("not two components")
+			}
+
+			_, fileName := path.Split(componentParts[1])
+			if strings.ToLower(fileName) != "main.java" {
+				issuesToSave = append(issuesToSave, Issue{
+					Rule:     issue.Rule,
+					File:     fileName,
+					Severity: issue.Severity,
+					Type:     issue.Type,
+					Message:  issue.Message,
+					Line:     issue.Line,
+				})
+			}
+		}
+
+		err = structToFile(issuesToSave, path.Join(submissionPath, ".issues.json"))
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+}
+
+func issuesRules() error {
+	rules := make(map[string]Rule)
+
+	if fileExists(path.Join(rootDir, ".manual_rules.json")) {
+		data, err := ioutil.ReadFile(path.Join(rootDir, ".manual_rules.json"))
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(data, &rules)
+		if err != nil {
+			return err
+		}
+	}
+
+	for key, rule := range rules {
+		rule.Count = 0
+		rules[key] = rule
+	}
+
+	err := forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+		if !fileExists(path.Join(submissionPath, ".issues.json")) {
+			return nil
+		}
+
+		data, err := ioutil.ReadFile(path.Join(submissionPath, ".issues.json"))
+		if err != nil {
+			return err
+		}
+
+		var issues []Issue
+
+		err = json.Unmarshal(data, &issues)
+		if err != nil {
+			return err
+		}
+
+		for _, issue := range issues {
+			rule := rules[issue.Rule]
+			rule.Severity = issue.Severity
+			rule.Type = issue.Type
+			if rule.ExampleMessage == "" && issue.Message != "" {
+				rule.ExampleMessage = issue.Message
+			}
+			rule.Count++
+			rules[issue.Rule] = rule
+		}
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	data, err := json.MarshalIndent(rules, "", "    ")
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(path.Join(rootDir, ".manual_rules.json"), data, 0644)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func groups() error {
+	groupings := Groupings{
+		EducationFields: make(map[string]string),
+		WorkDomains:     make(map[string]string),
+	}
+
+	if fileExists(path.Join(rootDir, ".manual_groupings.json")) {
+		data, err := ioutil.ReadFile(path.Join(rootDir, ".manual_groupings.json"))
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(data, &groupings)
+		if err != nil {
+			return err
+		}
+	}
+
+	err := forEachSession(func(s string, session Session) error {
+		if groupings.WorkDomains[session.BackgroundAnswers.WorkDomain] == "" {
+			groupings.WorkDomains[session.BackgroundAnswers.WorkDomain] = "TODO"
+		}
+
+		if groupings.EducationFields[session.BackgroundAnswers.EducationField] == "" {
+			groupings.EducationFields[session.BackgroundAnswers.EducationField] = "TODO"
+		}
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return structToFile(groupings, path.Join(rootDir, ".manual_groupings.json"))
+}
+
+func submissionInspection() error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+		inspection := SubmissionInspection{}
+
+		if fileExists(path.Join(submissionPath, ".manual_inspection.json")) {
+			data, err := ioutil.ReadFile(path.Join(submissionPath, ".manual_inspection.json"))
+			if err != nil {
+				return err
+			}
+
+			err = json.Unmarshal(data, &inspection)
+			if err != nil {
+				return err
+			}
+		}
+
+		if inspection.CopiedVariableNamesAll == nil {
+			inspection.CopiedVariableNamesAll = []string{}
+		}
+		if inspection.CopiedVariableNamesBad == nil {
+			inspection.CopiedVariableNamesBad = []string{}
+		}
+		if inspection.NewVariableNamesAll == nil {
+			inspection.NewVariableNamesAll = []string{}
+		}
+		if inspection.NewVariableNamesBad == nil {
+			inspection.NewVariableNamesBad = []string{}
+		}
+		if inspection.EditedVariableNamesAll == nil {
+			inspection.EditedVariableNamesAll = []string{}
+		}
+		if inspection.EditedVariableNamesBad == nil {
+			inspection.EditedVariableNamesBad = []string{}
+		}
+
+		if inspection.DocumentationState == "" {
+			inspection.DocumentationState = "None/Incorrect/Correct"
+		}
+
+		if inspection.TaskCompletion == "" {
+			inspection.TaskCompletion = "Not submitted/Does not compile/Invalid solution/Completed"
+		}
+
+		return structToFile(inspection, path.Join(submissionPath, ".manual_inspection.json"))
+	})
+}
+
+func sessionInspection() error {
+	return forEachSession(func(sessionPath string, session Session) error {
+		inspection := SessionInspection{}
+
+		if fileExists(path.Join(sessionPath, ".manual_inspection.json")) {
+			data, err := ioutil.ReadFile(path.Join(sessionPath, ".manual_inspection.json"))
+			if err != nil {
+				return err
+			}
+
+			err = json.Unmarshal(data, &inspection)
+			if err != nil {
+				return err
+			}
+		}
+
+		return structToFile(inspection, path.Join(sessionPath, ".manual_inspection.json"))
+	})
+}
+
+func sum() error {
+	// TODO generate csv
+	return nil
+}
+
+func humans() error {
+	// TODO add readmes for easy github navigation
+	// TODO some readable format of the CSV
+	return nil
+}
+
+func main() {
+	stages := []func() error{
+		download,
+		diff,
+		compile,
+		execution,
+		scan,
+		issues,
+		issuesRules,
+		groups,
+		submissionInspection,
+		sessionInspection,
+		sum,
+		humans,
+	}
+
+	for _, stage := range stages {
+		err := stage()
+		if err != nil {
+			panic(err)
 		}
 	}
 }
