@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,8 +11,11 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"regexp"
 	"strings"
 	"time"
+
+	"github.com/mohae/struct2csv"
 
 	"github.com/pkg/errors"
 
@@ -122,6 +126,46 @@ type Rule struct {
 type Groupings struct {
 	EducationFields map[string]string `json:"education_fields"`
 	WorkDomains     map[string]string `json:"work_domains"`
+	SignupCodes     map[string]string `json:"signup_codes"`
+}
+
+type TableRow struct {
+	Session                    string  `csv:"session"`
+	Group                      string  `csv:"group"`
+	EducationLevel             string  `csv:"education_level"`
+	EducationField             string  `csv:"education_field"`
+	ProgrammingExperience      float64 `csv:"work_experience_java"`
+	JavaExperience             float64 `csv:"work_experience_java"`
+	WorkDomain                 string  `csv:"work_domain"`
+	CompanyUsesCodeReviews     bool    `csv:"workplace_peer_review"`
+	CompanyUsesPairProgramming bool    `csv:"workplace_pair_programming"`
+	CompanyTracksTechnicalDebt bool    `csv:"workplace_td_tracking"`
+	CompanyHasCodingStandards  bool    `csv:"workplace_coding_standards"`
+
+	Submission      string `csv:"scenario"`
+	Order           int    `csv:"order"`
+	HighDebtVersion bool   `csv:"high_debt_version"`
+	QualityPreTask  int    `csv:"quality_pre_task"`
+	QualityPostTask int    `csv:"quality_post_task"`
+	Time            int    `csv:"time"`
+
+	SonarqubeIssues         int    `csv:"sonarqube_issues"`
+	ModifiedLines           int    `csv:"modified_lines"`
+	TaskCompletion          string `csv:"task_completion"`
+	ReusedLogicConstructor  bool   `csv:"reused_logic_constructor"`
+	ReusedLogicValidation   bool   `csv:"reused_logic_validation"`
+	ReusedLogicEquals       bool   `csv:"reused_logic_equals"`
+	ReusedLogicHashcode     bool   `csv:"reused_logic_hashcode"`
+	CopiedVariableNamesAll  int    `csv:"var_names_copied_all"`
+	CopiedVariableNamesGood int    `csv:"var_names_copied_good"`
+	NewVariableNamesAll     int    `csv:"var_names_new_all"`
+	NewVariableNamesGood    int    `csv:"var_names_new_good"`
+	EditedVariableNamesAll  int    `csv:"var_names_edited_all"`
+	EditedVariableNamesGood int    `csv:"var_names_edited_good"`
+	HasEquals               bool   `csv:"has_equals"`
+	HasHashCode             bool   `csv:"has_hashcode"`
+	DocumentationState      string `csv:"documentation_state"`
+	LargeStructureChange    bool   `csv:"large_structure_change"`
 }
 
 func fileExists(path string) bool {
@@ -644,11 +688,15 @@ func issues() error {
 		var issuesToSave []Issue
 		for _, issue := range response.Issues {
 			componentParts := strings.Split(issue.Component, ":")
-			if len(componentParts) != 2 {
-				return errors.New("not two components")
+			var fileName string
+			if len(componentParts) == 0 {
+				return errors.New("not two components: " + issue.Component)
+			} else if len(componentParts) == 2 {
+				_, fileName = path.Split(componentParts[1])
+			} else {
+				fileName = componentParts[0]
 			}
 
-			_, fileName := path.Split(componentParts[1])
 			if strings.ToLower(fileName) != "main.java" {
 				issuesToSave = append(issuesToSave, Issue{
 					Rule:     issue.Rule,
@@ -740,6 +788,7 @@ func groups() error {
 	groupings := Groupings{
 		EducationFields: make(map[string]string),
 		WorkDomains:     make(map[string]string),
+		SignupCodes:     make(map[string]string),
 	}
 
 	if fileExists(path.Join(rootDir, ".manual_groupings.json")) {
@@ -761,6 +810,10 @@ func groups() error {
 
 		if groupings.EducationFields[session.BackgroundAnswers.EducationField] == "" {
 			groupings.EducationFields[session.BackgroundAnswers.EducationField] = "TODO"
+		}
+
+		if groupings.SignupCodes[session.SignupCode] == "" {
+			groupings.SignupCodes[session.SignupCode] = "TODO"
 		}
 		return nil
 	})
@@ -838,14 +891,199 @@ func sessionInspection() error {
 	})
 }
 
+var EmptyLineRE = regexp.MustCompile(`(?m)^[><|][\s}]*$`)
+var AllLinesRE = regexp.MustCompile(`(?m)^[><|].*$`)
+
 func sum() error {
-	// TODO generate csv
+	var table []TableRow
+
+	var manualGroupings Groupings
+
+	data, err := ioutil.ReadFile(path.Join(rootDir, ".manual_groupings.json"))
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(data, &manualGroupings)
+	if err != nil {
+		return err
+	}
+
+	manualRules := make(map[string]Rule)
+
+	data, err = ioutil.ReadFile(path.Join(rootDir, ".manual_rules.json"))
+	if err != nil {
+		return err
+	}
+
+	err = json.Unmarshal(data, &manualRules)
+	if err != nil {
+		return err
+	}
+
+	err = forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+		sessionPath, submissionName := path.Split(submissionPath)
+		sessionName := path.Base(sessionPath)
+
+		var sessionInspection SessionInspection
+
+		data, err = ioutil.ReadFile(path.Join(sessionPath, ".manual_inspection.json"))
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(data, &sessionInspection)
+		if err != nil {
+			return err
+		}
+
+		var submissionInspection SubmissionInspection
+
+		data, err = ioutil.ReadFile(path.Join(submissionPath, ".manual_inspection.json"))
+		if err != nil {
+			return err
+		}
+
+		err = json.Unmarshal(data, &submissionInspection)
+		if err != nil {
+			return err
+		}
+
+		var issues []Issue
+
+		if fileExists(path.Join(submissionPath, ".issues.json")) {
+			data, err = ioutil.ReadFile(path.Join(submissionPath, ".issues.json"))
+			if err != nil {
+				return err
+			}
+
+			err = json.Unmarshal(data, &issues)
+			if err != nil {
+				return err
+			}
+		}
+
+		issuesCount := 0
+		for _, issue := range issues {
+			rule := manualRules[issue.Rule]
+
+			if !rule.Ignored {
+				issuesCount++
+			}
+		}
+
+		modifiedLines := 0
+		if fileExists(path.Join(submissionPath, ".diff")) {
+			data, err := ioutil.ReadFile(path.Join(submissionPath, ".diff"))
+			if err != nil {
+				return err
+			}
+
+			modifiedLines = len(AllLinesRE.FindAll(data, -1)) - len(EmptyLineRE.FindAll(data, -1))
+		}
+
+		educationField := manualGroupings.EducationFields[session.BackgroundAnswers.EducationField]
+		if educationField == "TODO" || educationField == "" {
+			fmt.Printf("sum, skipping, no educationField mapping %s (%s) \n", session.BackgroundAnswers.EducationField, submissionPath)
+			return nil
+		}
+
+		workDomain := manualGroupings.WorkDomains[session.BackgroundAnswers.WorkDomain]
+		if workDomain == "TODO" || workDomain == "" {
+			fmt.Printf("sum, skipping, no workdomain mapping %s (%s) \n", session.BackgroundAnswers.WorkDomain, submissionPath)
+			return nil
+		}
+
+		group := manualGroupings.SignupCodes[session.SignupCode]
+		if group == "TODO" || group == "" {
+			fmt.Printf("sum, skipping, no signup code mapping %s (%s) \n", session.SignupCode, submissionPath)
+			return nil
+		}
+
+		if !sessionInspection.Done {
+			fmt.Printf("sum, skipping, no session inspection(%s) \n", submissionPath)
+			return nil
+		}
+
+		if !submissionInspection.Done {
+			fmt.Printf("sum, skipping, no submission inspection(%s) \n", submissionPath)
+			return nil
+		}
+
+		fmt.Printf("sum (%s)\n", submissionPath)
+
+		tr := TableRow{
+			Session:                    sessionName,
+			Group:                      group,
+			EducationLevel:             session.BackgroundAnswers.EducationLevel,
+			EducationField:             educationField,
+			ProgrammingExperience:      sessionInspection.WorkExperience,
+			JavaExperience:             sessionInspection.WorkExperienceJava,
+			WorkDomain:                 workDomain,
+			CompanyUsesCodeReviews:     session.BackgroundAnswers.CompanyUsesCodeReviews,
+			CompanyUsesPairProgramming: session.BackgroundAnswers.CompanyUsesPairProgramming,
+			CompanyTracksTechnicalDebt: session.BackgroundAnswers.CompanyTracksTechnicalDebt,
+			CompanyHasCodingStandards:  session.BackgroundAnswers.CompanyHasCodingStandards,
+			Submission:                 submissionName,
+			Order:                      submission.Order,
+			HighDebtVersion:            submission.HighDebtVersion,
+			QualityPreTask:             submission.ReflectionAnswers.ScenarioQuality,
+			QualityPostTask:            submission.ReflectionAnswers.SubmissionQuality,
+			Time:                       int(submission.Time.Seconds()),
+			SonarqubeIssues:            issuesCount,
+			ModifiedLines:              modifiedLines,
+			TaskCompletion:             submissionInspection.TaskCompletion,
+			ReusedLogicConstructor:     submissionInspection.ReusedLogicConstructor,
+			ReusedLogicValidation:      submissionInspection.ReusedLogicValidation,
+			ReusedLogicEquals:          submissionInspection.ReusedLogicEquals,
+			ReusedLogicHashcode:        submissionInspection.ReusedLogicHashcode,
+			CopiedVariableNamesAll:     len(submissionInspection.CopiedVariableNamesAll),
+			CopiedVariableNamesGood:    len(submissionInspection.CopiedVariableNamesAll) - len(submissionInspection.CopiedVariableNamesBad),
+			NewVariableNamesAll:        len(submissionInspection.NewVariableNamesAll),
+			NewVariableNamesGood:       len(submissionInspection.NewVariableNamesAll) - len(submissionInspection.NewVariableNamesBad),
+			EditedVariableNamesAll:     len(submissionInspection.EditedVariableNamesAll),
+			EditedVariableNamesGood:    len(submissionInspection.EditedVariableNamesAll) - len(submissionInspection.EditedVariableNamesBad),
+			HasEquals:                  submissionInspection.HasEquals,
+			HasHashCode:                submissionInspection.HasHashCode,
+			DocumentationState:         submissionInspection.DocumentationState,
+			LargeStructureChange:       submissionInspection.LargeStructureChange,
+		}
+
+		table = append(table, tr)
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	encoder := struct2csv.New()
+
+	csvTable, err := encoder.Marshal(table)
+	if err != nil {
+		return err
+	}
+
+	f, err := os.OpenFile(path.Join(rootDir, "data.csv"), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	writer := csv.NewWriter(f)
+
+	err = writer.WriteAll(csvTable)
+	if err != nil {
+		return err
+	}
+
+	writer.Flush()
+
 	return nil
 }
 
 func humans() error {
 	// TODO add readmes for easy github navigation
-	// TODO some readable format of the CSV
+	// TODO some readable format of the CSV?
 	return nil
 }
 
