@@ -22,7 +22,7 @@ import (
 	"sidus.io/robotresearcher/internal/database"
 )
 
-var rootDir string = "submissions"
+var rootDir = "submissions"
 
 func structToFile(a interface{}, file string) error {
 	data, err := json.MarshalIndent(a, "", "    ")
@@ -64,7 +64,8 @@ type SurveySubmission struct {
 	SubmissionQuality int `json:"quality_post_task"`
 }
 
-type Submisison struct {
+type Submission struct {
+	NotSubmitted      bool              `json:"not_submitted"`
 	HighDebtVersion   bool              `json:"high_debt_version"`
 	Time              time.Duration     `json:"time"`
 	Order             int               `json:"order"`
@@ -134,7 +135,7 @@ type TableRow struct {
 	Group                      string  `csv:"group"`
 	EducationLevel             string  `csv:"education_level"`
 	EducationField             string  `csv:"education_field"`
-	ProgrammingExperience      float64 `csv:"work_experience_java"`
+	ProgrammingExperience      float64 `csv:"work_experience_programming"`
 	JavaExperience             float64 `csv:"work_experience_java"`
 	WorkDomain                 string  `csv:"work_domain"`
 	CompanyUsesCodeReviews     bool    `csv:"workplace_peer_review"`
@@ -248,44 +249,47 @@ func download() error {
 		}
 
 		for i, scenario := range session.Scenarios {
-			if scenario.SubmittedAt.IsZero() {
-				continue
-			}
-
 			scenarioDir := path.Join(sessionDir, scenario.Name)
 			srcDir := path.Join(scenarioDir, ".submission", scenario.Name)
 
-			err = os.MkdirAll(srcDir, 0775)
+			err = os.MkdirAll(scenarioDir, 0775)
 			if err != nil {
-				return errors.Wrap(err, "could not create submission directory")
+				return errors.Wrap(err, "could not create scenario directory")
 			}
 
-			// save all submitted files
-			for name, content := range scenario.Submitted {
-				if strings.Contains(name, string(os.PathSeparator)) {
-					break
-				}
-
-				if !strings.HasSuffix(name, ".java") {
-					break
-				}
-
-				if content == "" {
-					break
-				}
-
-				code, err := base64.StdEncoding.DecodeString(content)
+			if !scenario.SubmittedAt.IsZero() {
+				err = os.MkdirAll(srcDir, 0775)
 				if err != nil {
-					fmt.Println(err)
-					break
+					return errors.Wrap(err, "could not create submission directory")
 				}
 
-				code = []byte(strings.ToValidUTF8(string(code), "?"))
+				// save all submitted files
+				for name, content := range scenario.Submitted {
+					if strings.Contains(name, string(os.PathSeparator)) {
+						break
+					}
 
-				err = ioutil.WriteFile(path.Join(srcDir, name), code, 0644)
-				if err != nil {
-					fmt.Println(err)
-					break
+					if !strings.HasSuffix(name, ".java") {
+						break
+					}
+
+					if content == "" {
+						break
+					}
+
+					code, err := base64.StdEncoding.DecodeString(content)
+					if err != nil {
+						fmt.Println(err)
+						break
+					}
+
+					code = []byte(strings.ToValidUTF8(string(code), "?"))
+
+					err = ioutil.WriteFile(path.Join(srcDir, name), code, 0644)
+					if err != nil {
+						fmt.Println(err)
+						break
+					}
 				}
 			}
 
@@ -303,8 +307,9 @@ func download() error {
 				}
 			}
 
-			err = structToFile(Submisison{
+			err = structToFile(Submission{
 				HighDebtVersion:   scenario.HasHighDebt,
+				NotSubmitted:      scenario.SubmittedAt.IsZero(),
 				Time:              scenario.SubmittedAt.Sub(scenario.StartedAt),
 				Order:             i,
 				ReflectionAnswers: &reflectionAnswers,
@@ -350,7 +355,7 @@ func forEachSession(f func(string, Session) error) error {
 	return nil
 }
 
-func forEachSubmission(f func(string, Session, Submisison) error) error {
+func forEachSubmission(f func(string, Session, Submission) error) error {
 	return forEachSession(func(sessionPath string, session Session) error {
 		for _, submissionName := range []string{"booking", "tickets"} {
 			submissionPath := path.Join(sessionPath, submissionName)
@@ -364,7 +369,7 @@ func forEachSubmission(f func(string, Session, Submisison) error) error {
 				return err
 			}
 
-			var submission Submisison
+			var submission Submission
 			err = json.Unmarshal(submissionData, &submission)
 			if err != nil {
 				return err
@@ -380,11 +385,17 @@ func forEachSubmission(f func(string, Session, Submisison) error) error {
 }
 
 func diff() error {
-	return forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		if fileExists(path.Join(submissionPath, ".diff")) || fileExists(path.Join(submissionPath, ".diff.error")) {
 			fmt.Printf("diff skipped: %s\n", submissionPath)
 			return nil
 		}
+
+		if submission.NotSubmitted {
+			fmt.Printf("diff skipped: %s\n", submissionPath)
+			return nil
+		}
+
 		cmd := exec.Command(
 			"diff",
 			"-rdBEZN",
@@ -394,7 +405,7 @@ func diff() error {
 				"..",
 				"Scenarios",
 				path.Base(submissionPath),
-				debtString(submisison.HighDebtVersion)+"_debt",
+				debtString(submission.HighDebtVersion)+"_debt",
 				path.Base(submissionPath),
 			),
 			path.Join(".submission", path.Base(submissionPath)),
@@ -440,11 +451,16 @@ func diff() error {
 }
 
 func compile() error {
-	return forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		srcDir := path.Join(submissionPath, ".submission", path.Base(submissionPath))
 
 		if fileExists(path.Join(submissionPath, ".out")) || fileExists(path.Join(submissionPath, ".compilation.error")) {
 			fmt.Printf("compilation skipped (.out or .compilation.error present): %s\n", submissionPath)
+			return nil
+		}
+
+		if submission.NotSubmitted {
+			fmt.Printf("compilation skipped: %s\n", submissionPath)
 			return nil
 		}
 
@@ -496,7 +512,7 @@ func compile() error {
 }
 
 func execution() error {
-	return forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*30)
 		defer cancel()
 
@@ -507,6 +523,11 @@ func execution() error {
 
 		if fileExists(path.Join(submissionPath, ".compilation.error")) {
 			fmt.Printf("execution skipped (compilation failed): %s\n", submissionPath)
+			return nil
+		}
+
+		if submission.NotSubmitted {
+			fmt.Printf("compilation skipped: %s\n", submissionPath)
 			return nil
 		}
 
@@ -557,8 +578,13 @@ func execution() error {
 }
 
 func scan() error {
-	return forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		sessionPath, submissionName := path.Split(submissionPath)
+
+		if submission.NotSubmitted {
+			fmt.Printf("scanning skipped (not submitted): %s\n", submissionPath)
+			return nil
+		}
 
 		if !fileExists(path.Join(submissionPath, ".out")) && !fileExists(path.Join(submissionPath, ".compilation.error")) {
 			return errors.New("must compile before scan")
@@ -618,7 +644,7 @@ func scan() error {
 func issues() error {
 	client := http.DefaultClient
 
-	return forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		if fileExists(path.Join(submissionPath, ".issues.json")) || fileExists(path.Join(submissionPath, ".issues.error")) {
 			fmt.Printf("issues skipped (.issues.json or .issues.error present): %s\n", submissionPath)
 			return nil
@@ -626,6 +652,11 @@ func issues() error {
 
 		if !fileExists(path.Join(submissionPath, ".sonarscanner")) {
 			fmt.Printf("issues skipped (no scan output): %s\n", submissionPath)
+			return nil
+		}
+
+		if submission.NotSubmitted {
+			fmt.Printf("issues skipped: %s\n", submissionPath)
 			return nil
 		}
 
@@ -737,7 +768,7 @@ func issuesRules() error {
 		rules[key] = rule
 	}
 
-	err := forEachSubmission(func(submissionPath string, session Session, submisison Submisison) error {
+	err := forEachSubmission(func(submissionPath string, session Session, submisison Submission) error {
 		if !fileExists(path.Join(submissionPath, ".issues.json")) {
 			return nil
 		}
@@ -825,7 +856,7 @@ func groups() error {
 }
 
 func submissionInspection() error {
-	return forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+	return forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		inspection := SubmissionInspection{}
 
 		if fileExists(path.Join(submissionPath, ".manual_inspection.json")) {
@@ -864,7 +895,11 @@ func submissionInspection() error {
 		}
 
 		if inspection.TaskCompletion == "" {
-			inspection.TaskCompletion = "Not submitted/Does not compile/Invalid solution/Completed"
+			if !submission.NotSubmitted {
+				inspection.TaskCompletion = "Not submitted/Does not compile/Invalid solution/Completed"
+			} else {
+				inspection.TaskCompletion = "Not submitted"
+			}
 		}
 
 		return structToFile(inspection, path.Join(submissionPath, ".manual_inspection.json"))
@@ -921,7 +956,7 @@ func sum() error {
 		return err
 	}
 
-	err = forEachSubmission(func(submissionPath string, session Session, submission Submisison) error {
+	err = forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		sessionPath, submissionName := path.Split(submissionPath)
 		sessionName := path.Base(sessionPath)
 
@@ -1083,7 +1118,6 @@ func sum() error {
 
 func humans() error {
 	// TODO add readmes for easy github navigation
-	// TODO some readable format of the CSV?
 	return nil
 }
 
