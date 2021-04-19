@@ -150,7 +150,11 @@ type TableRow struct {
 	QualityPostTask int    `csv:"quality_post_task"`
 	Time            int    `csv:"time"`
 
-	SonarqubeIssues         int    `csv:"sonarqube_issues"`
+	SonarqubeIssuesMajor    int `csv:"sonarqube_issues_major"`
+	SonarqubeIssuesInfo     int `csv:"sonarqube_issues_info"`
+	SonarqubeIssuesMinor    int `csv:"sonarqube_issues_minor"`
+	SonarqubeIssuesCritical int `csv:"sonarqube_issues_critical"`
+
 	ModifiedLines           int    `csv:"modified_lines"`
 	TaskCompletion          string `csv:"task_completion"`
 	ReusedLogicConstructor  bool   `csv:"reused_logic_constructor"`
@@ -163,8 +167,8 @@ type TableRow struct {
 	NewVariableNamesGood    int    `csv:"var_names_new_good"`
 	EditedVariableNamesAll  int    `csv:"var_names_edited_all"`
 	EditedVariableNamesGood int    `csv:"var_names_edited_good"`
-	HasEquals               bool   `csv:"has_equals"`
-	HasHashCode             bool   `csv:"has_hashcode"`
+	EqualsState             string `csv:"equals_state"`
+	HashCodeState           string `csv:"hashcode_state"`
 	DocumentationState      string `csv:"documentation_state"`
 	LargeStructureChange    bool   `csv:"large_structure_change"`
 }
@@ -998,12 +1002,42 @@ func sum() error {
 			}
 		}
 
-		issuesCount := 0
+		issuesMajor := 0
+		issuesInfo := 0
+		issuesMinor := 0
+		issuesCritical := 0
+		skippedExisting := false
+		if submissionName == "tickets" && submission.HighDebtVersion == true {
+			skippedExisting = true
+		}
 		for _, issue := range issues {
 			rule := manualRules[issue.Rule]
 
 			if !rule.Ignored {
-				issuesCount++
+				if issue.Rule == "fb-contrib:OCP_OVERLY_CONCRETE_PARAMETER" &&
+					issue.File == "Interval.java" &&
+					submissionName == "booking" &&
+					!skippedExisting {
+					skippedExisting = true
+					continue
+				} else if issue.Rule == "java:S1172" &&
+					issue.File == "TicketType.java" &&
+					!skippedExisting {
+					skippedExisting = true
+					continue
+				}
+				switch issue.Severity {
+				case "MAJOR":
+					issuesMajor++
+				case "INFO":
+					issuesInfo++
+				case "MINOR":
+					issuesMinor++
+				case "CRITICAL":
+					issuesCritical++
+				default:
+					panic(issue.Severity)
+				}
 			}
 		}
 
@@ -1045,6 +1079,27 @@ func sum() error {
 			return nil
 		}
 
+		time := int(submission.Time.Seconds())
+		if time < 0 {
+			time = 0
+		}
+
+		equalsState := "Not implemented"
+		if submissionInspection.HasEquals {
+			equalsState = "Duplicated"
+			if submissionInspection.ReusedLogicEquals {
+				equalsState = "Good"
+			}
+		}
+
+		hashCodeState := "Not implemented"
+		if submissionInspection.HasHashCode {
+			hashCodeState = "Duplicated"
+			if submissionInspection.ReusedLogicHashcode {
+				hashCodeState = "Good"
+			}
+		}
+
 		fmt.Printf("sum (%s)\n", submissionPath)
 
 		tr := TableRow{
@@ -1064,8 +1119,11 @@ func sum() error {
 			HighDebtVersion:            submission.HighDebtVersion,
 			QualityPreTask:             submission.ReflectionAnswers.ScenarioQuality,
 			QualityPostTask:            submission.ReflectionAnswers.SubmissionQuality,
-			Time:                       int(submission.Time.Seconds()),
-			SonarqubeIssues:            issuesCount,
+			Time:                       time,
+			SonarqubeIssuesMajor:       issuesMajor,
+			SonarqubeIssuesMinor:       issuesMinor,
+			SonarqubeIssuesInfo:        issuesInfo,
+			SonarqubeIssuesCritical:    issuesCritical,
 			ModifiedLines:              modifiedLines,
 			TaskCompletion:             submissionInspection.TaskCompletion,
 			ReusedLogicConstructor:     submissionInspection.ReusedLogicConstructor,
@@ -1078,8 +1136,8 @@ func sum() error {
 			NewVariableNamesGood:       len(submissionInspection.NewVariableNamesAll) - len(submissionInspection.NewVariableNamesBad),
 			EditedVariableNamesAll:     len(submissionInspection.EditedVariableNamesAll),
 			EditedVariableNamesGood:    len(submissionInspection.EditedVariableNamesAll) - len(submissionInspection.EditedVariableNamesBad),
-			HasEquals:                  submissionInspection.HasEquals,
-			HasHashCode:                submissionInspection.HasHashCode,
+			EqualsState:                equalsState,
+			HashCodeState:              hashCodeState,
 			DocumentationState:         submissionInspection.DocumentationState,
 			LargeStructureChange:       submissionInspection.LargeStructureChange,
 		}
@@ -1090,6 +1148,29 @@ func sum() error {
 	if err != nil {
 		return err
 	}
+
+	var tmp []TableRow
+
+	for _, tr := range table {
+		if tr.Order == 1 {
+			var previous TableRow
+
+			for _, otr := range table {
+				if otr.Session == tr.Session && otr.Order == 0 {
+					previous = otr
+					break
+				}
+			}
+
+			if previous.TaskCompletion == "Not submitted" && tr.TaskCompletion == "Not submitted" {
+				continue
+			}
+		}
+
+		tmp = append(tmp, tr)
+	}
+
+	table = tmp
 
 	encoder := struct2csv.New()
 
