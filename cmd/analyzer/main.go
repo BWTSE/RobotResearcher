@@ -159,8 +159,6 @@ type TableRow struct {
 	TaskCompletion          string `csv:"task_completion"`
 	ReusedLogicConstructor  bool   `csv:"reused_logic_constructor"`
 	ReusedLogicValidation   bool   `csv:"reused_logic_validation"`
-	ReusedLogicEquals       bool   `csv:"reused_logic_equals"`
-	ReusedLogicHashcode     bool   `csv:"reused_logic_hashcode"`
 	CopiedVariableNamesAll  int    `csv:"var_names_copied_all"`
 	CopiedVariableNamesGood int    `csv:"var_names_copied_good"`
 	NewVariableNamesAll     int    `csv:"var_names_new_all"`
@@ -1128,8 +1126,6 @@ func sum() error {
 			TaskCompletion:             submissionInspection.TaskCompletion,
 			ReusedLogicConstructor:     submissionInspection.ReusedLogicConstructor,
 			ReusedLogicValidation:      submissionInspection.ReusedLogicValidation,
-			ReusedLogicEquals:          submissionInspection.ReusedLogicEquals,
-			ReusedLogicHashcode:        submissionInspection.ReusedLogicHashcode,
 			CopiedVariableNamesAll:     len(submissionInspection.CopiedVariableNamesAll),
 			CopiedVariableNamesGood:    len(submissionInspection.CopiedVariableNamesAll) - len(submissionInspection.CopiedVariableNamesBad),
 			NewVariableNamesAll:        len(submissionInspection.NewVariableNamesAll),
