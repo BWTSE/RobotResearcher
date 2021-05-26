@@ -107,6 +107,9 @@ export default {
   },
   methods: {
     submit () {
+      if (this.$demoMode) {
+        return this.$router.push('/experiment/1')
+      }
       if (this.loading) return
       this.loading = true
       this.axios.post('background', this.surveyAnswers).then(() => {
@@ -118,24 +121,26 @@ export default {
     },
   },
   mounted () {
-    this.$auth.fetch().then((a) => {
-      switch (a.data.stage) {
-        case 'agreement':
-          this.$router.push('/intro')
-          break
-        case 'background':
-          break
-        case 'experiment':
-          this.$router.push('/experiment/' + a.data.experiment)
-          break
-        case 'survey':
-          this.$router.push('/experiment/3')
-          break
-        default:
-          this.$router.push('/farewell')
-          break
-      }
-    })
+    if (!this.$demoMode) {
+      this.$auth.fetch().then((a) => {
+        switch (a.data.stage) {
+          case 'agreement':
+            this.$router.push('/intro')
+            break
+          case 'background':
+            break
+          case 'experiment':
+            this.$router.push('/experiment/' + a.data.experiment)
+            break
+          case 'survey':
+            this.$router.push('/experiment/3')
+            break
+          default:
+            this.$router.push('/farewell')
+            break
+        }
+      })
+    }
   },
 }
 </script>

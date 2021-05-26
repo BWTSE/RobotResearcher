@@ -33,7 +33,7 @@ export default {
   data () {
     return {
       scenarios: 2,
-      scenarioList: ['1', '2'],
+      scenarioList: this.$demoMode ? ['Booking', 'Tickets'] : ['1', '2'],
     }
   },
   computed: {
@@ -48,9 +48,11 @@ export default {
     },
   },
   mounted () {
-    this.$auth.fetch().then((a) => {
-      Vue.set(this, 'scenarioList', a.data.scenario_order.map((name) => name.charAt(0).toUpperCase() + name.slice(1)))
-    })
+    if (!this.$demoMode) {
+      this.$auth.fetch().then((a) => {
+        Vue.set(this, 'scenarioList', a.data.scenario_order.map((name) => name.charAt(0).toUpperCase() + name.slice(1)))
+      })
+    }
   },
 }
 </script>

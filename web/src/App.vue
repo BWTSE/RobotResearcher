@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-main v-if="$auth.ready()">
+    <v-main v-if="$demoMode || $auth.ready()">
       <router-view />
     </v-main>
     <v-main v-else>

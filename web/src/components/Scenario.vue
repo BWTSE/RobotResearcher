@@ -111,6 +111,10 @@ export default {
   },
   methods: {
     next () {
+      if (this.$demoMode) {
+        this.nextDialog = false
+        return this.$router.push('/experiment/' + (Number(this.$route.params.number) + 1))
+      }
       if (this.loading) return
       this.loading = true
       this.axios.post('scenario/' + (Number(this.$route.params.number) - 1), { submission: this.prepareSubmission(this.files) }).then(() => {
@@ -123,6 +127,11 @@ export default {
       })
     },
     run () {
+      if (this.$demoMode) {
+        this.runCode = -1
+        this.runOutput = 'No code execution in demo mode\n'
+        return
+      }
       if (this.loading) return
       this.loading = true
       this.axios.post('code/run', { submission: this.prepareSubmission(this.files) }).then((resp) => {
@@ -160,35 +169,52 @@ export default {
         this.loading = false
       })
     },
+    loadDemoScenario () {
+      this.info = '# Demo task\nThis is just a `demo`'
+      this.files = {
+        'Main.java': 'public static class Main {\n\tpublic static main(String[] args) {\n\t\tSystem.out.println("Hello world!");\n\t}\n}',
+        'Other.java': 'another java class',
+      }
+      this.startedAt = moment()
+      this.runOutput = ''
+    },
   },
   mounted () {
-    this.$auth.fetch().then((a) => {
-      switch (a.data.stage) {
-        case 'agreement':
-          this.$router.push('/intro')
-          break
-        case 'background':
-          this.$router.push('/experiment/0')
-          break
-        case 'experiment':
-          if (this.$route.params.number !== a.data.experiment) {
-            this.$router.push('/experiment/' + a.data.experiment)
-          }
-          break
-        case 'survey':
-          this.$router.push('/experiment/3')
-          break
-        default:
-          this.$router.push('/farewell')
-          break
-      }
-    })
-    this.loadScenario()
+    if (!this.$demoMode) {
+      this.$auth.fetch().then((a) => {
+        switch (a.data.stage) {
+          case 'agreement':
+            this.$router.push('/intro')
+            break
+          case 'background':
+            this.$router.push('/experiment/0')
+            break
+          case 'experiment':
+            if (this.$route.params.number !== a.data.experiment) {
+              this.$router.push('/experiment/' + a.data.experiment)
+            }
+            break
+          case 'survey':
+            this.$router.push('/experiment/3')
+            break
+          default:
+            this.$router.push('/farewell')
+            break
+        }
+      })
+      this.loadScenario()
+    } else {
+      this.loadDemoScenario()
+    }
   },
   watch: {
     number (n, o) {
       if (n !== o) {
-        this.loadScenario()
+        if (!this.$demoMode) {
+          this.loadScenario()
+        } else {
+          this.loadDemoScenario()
+        }
       }
     },
   },

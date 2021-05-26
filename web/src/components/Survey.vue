@@ -73,9 +73,8 @@ export default {
         ScenarioBookingQualityChange: null,
       },
       scenarios: [
-        'Shapes',
         'Booking',
-        'Shopping',
+        'Tickets',
       ],
       scenarioHelp: {
         Tickets: 'The task where you were asked to extend a buss ticket system',
@@ -89,29 +88,34 @@ export default {
     },
   },
   mounted () {
-    this.$auth.fetch().then((a) => {
-      Vue.set(this, 'scenarios', a.data.scenario_order.map((name) => name.charAt(0).toUpperCase() + name.slice(1)))
+    if (!this.$demoMode) {
+      this.$auth.fetch().then((a) => {
+        Vue.set(this, 'scenarios', a.data.scenario_order.map((name) => name.charAt(0).toUpperCase() + name.slice(1)))
 
-      switch (a.data.stage) {
-        case 'agreement':
-          this.$router.push('/intro')
-          break
-        case 'background':
-          this.$router.push('/experiment/0')
-          break
-        case 'experiment':
-          this.$router.push('/experiment/' + a.data.experiment)
-          break
-        case 'survey':
-          break
-        default:
-          this.$router.push('/farewell')
-          break
-      }
-    })
+        switch (a.data.stage) {
+          case 'agreement':
+            this.$router.push('/intro')
+            break
+          case 'background':
+            this.$router.push('/experiment/0')
+            break
+          case 'experiment':
+            this.$router.push('/experiment/' + a.data.experiment)
+            break
+          case 'survey':
+            break
+          default:
+            this.$router.push('/farewell')
+            break
+        }
+      })
+    }
   },
   methods: {
     submit () {
+      if (this.$demoMode) {
+        return this.$router.push('/farewell')
+      }
       if (this.loading) return
       this.loading = true
       this.axios.post('survey', this.surveyAnswers).then(() => {

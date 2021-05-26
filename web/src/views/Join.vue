@@ -16,6 +16,7 @@
           label="Code"
           v-model="code"
           :error-messages="errorMessage"
+          :disabled="$demoMode"
         ></v-text-field>
         <v-checkbox v-model="cookie" label="I accept that this site stores a cookie on my computer. The cookie is used to anonymously identify the submission."></v-checkbox>
         <v-btn
@@ -34,7 +35,7 @@ export default {
   name: 'Join',
   data () {
     return {
-      code: '',
+      code: this.$demoMode ? 'demo' : '',
       cookie: false,
       rememberMe: true,
       processing: false,
@@ -43,6 +44,10 @@ export default {
   },
   methods: {
     login: function () {
+      if (this.$demoMode) {
+        return this.$router.push('/intro')
+      }
+
       if (!(this.processing || this.code === '')) {
         this.processing = true
         this.$auth.login({
@@ -66,8 +71,10 @@ export default {
     },
   },
   created () {
-    if (this.$auth.check()) {
-      this.$router.push('/intro')
+    if (!this.$demoMode) {
+      if (this.$auth.check()) {
+        this.$router.push('/intro')
+      }
     }
   },
 }

@@ -20,9 +20,10 @@
         frameborder="0"
         marginheight="0"
         marginwidth="0"
+        v-if="!$demoMode"
       >
         Läser in...
-      </iframe>
+      </iframe><span v-else>No form in demo mode</span>
     </v-card>
   </v-row>
 </template>
@@ -31,11 +32,13 @@
 export default {
   name: 'Farewell',
   mounted () {
-    this.$auth.logout({
-      makeRequest: true,
-      url: 'auth/close',
-      redirect: false,
-    })
+    if (!this.$demoMode) {
+      this.$auth.logout({
+        makeRequest: true,
+        url: 'auth/close',
+        redirect: false,
+      })
+    }
   },
 }
 </script>

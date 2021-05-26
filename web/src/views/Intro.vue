@@ -22,7 +22,7 @@
             This experiment is part of a master thesis by William Leven (<a target="_blank" href="mailto:william@leven.id">william@leven.id</a>) and Hampus Broman (<a target="_blank" href="mailto:bromanh@student.chalmers.se">bromanh@student.chalmers.se</a>) studying at the Software Engineering master program at Chalmers University. The supervisors are Terese Besker and Richard Torkar.
           </p>
           <p><!-- Also in Farewell.vue -->
-            If you want to receive a copy of the thesis after its completion you may provide your email at: <a target="_blank" href="https://forms.gle/WJ3kXBfBYjCV35E89">https://forms.gle/WJ3kXBfBYjCV35E89</a>
+            If you want to receive a copy of the thesis after its completion you may provide your email at: <a v-if="!$demoMode" target="_blank" href="https://forms.gle/WJ3kXBfBYjCV35E89">https://forms.gle/WJ3kXBfBYjCV35E89</a><span v-else>DEMO MODE</span>
           </p>
           <v-divider />
           <h3>Confidentiality agreement</h3>
@@ -35,6 +35,10 @@
           <p>
             None of the collected data can, by its nature, uniquely identify you as an individual.
             In those cases where the submitted data contains any uniquely identifying information, the dataset will be anonymized before further processing or publication to ensure confidentiality.
+          </p>
+
+          <p v-if="$demoMode">
+            Demo mode! No data will be stored.
           </p>
 
           <v-checkbox
@@ -66,6 +70,9 @@ export default {
   methods: {
     submit () {
       if (this.accepted === true) {
+        if (this.$demoMode) {
+          return this.$router.push('/experiment/0')
+        }
         this.axios.post('agreement/accept').then(() => {
           this.$router.push('/experiment/0')
         })
@@ -73,25 +80,27 @@ export default {
     },
   },
   mounted () {
-    this.$auth.fetch().then((a) => {
-      switch (a.data.stage) {
-        case 'agreement':
-          // this.$router.push('/intro')
-          break
-        case 'background':
-          this.$router.push('/experiment/0')
-          break
-        case 'experiment':
-          this.$router.push('/experiment/' + a.data.experiment)
-          break
-        case 'survey':
-          this.$router.push('/experiment/3')
-          break
-        default:
-          this.$router.push('/farewell')
-          break
-      }
-    })
+    if (!this.$demoMode) {
+      this.$auth.fetch().then((a) => {
+        switch (a.data.stage) {
+          case 'agreement':
+            // this.$router.push('/intro')
+            break
+          case 'background':
+            this.$router.push('/experiment/0')
+            break
+          case 'experiment':
+            this.$router.push('/experiment/' + a.data.experiment)
+            break
+          case 'survey':
+            this.$router.push('/experiment/3')
+            break
+          default:
+            this.$router.push('/farewell')
+            break
+        }
+      })
+    }
   },
 }
 </script>
