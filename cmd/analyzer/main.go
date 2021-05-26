@@ -958,6 +958,25 @@ func sum() error {
 		return err
 	}
 
+	/* print latex list of rules
+	san := func(s string) string {
+		s = strings.ReplaceAll(s, "_", "\\_")
+		s = strings.ReplaceAll(s, "$", "\\$")
+		s = strings.ReplaceAll(s, "%", "\\%")
+		s = strings.ReplaceAll(s, "^", "\\^{}")
+		s = strings.ReplaceAll(s, "\"", "''")
+		return s
+	}
+
+	for key, rule := range manualRules {
+		if rule.Ignored {
+			fmt.Printf("\\sonarruleignored{%s}{%s}{%s}\n", san(key), san(rule.ExampleMessage), san(rule.IgnoredComment))
+		} else {
+			fmt.Printf("\\sonarrule{%s}{%s}{%s}\n", san(key), san(rule.ExampleMessage), san(rule.IgnoredComment))
+		}
+	}
+	*/
+
 	err = forEachSubmission(func(submissionPath string, session Session, submission Submission) error {
 		sessionPath, submissionName := path.Split(submissionPath)
 		sessionName := path.Base(sessionPath)
@@ -1193,11 +1212,6 @@ func sum() error {
 	return nil
 }
 
-func humans() error {
-	// TODO add readmes for easy github navigation
-	return nil
-}
-
 func main() {
 	stages := []func() error{
 		download,
@@ -1211,7 +1225,6 @@ func main() {
 		submissionInspection,
 		sessionInspection,
 		sum,
-		humans,
 	}
 
 	for _, stage := range stages {
