@@ -1024,7 +1024,7 @@ func sum() error {
 		issuesMinor := 0
 		issuesCritical := 0
 		skippedExisting := false
-		if submissionName == "tickets" && submission.HighDebtVersion == true {
+		if submissionName == "tickets" && submission.HighDebtVersion {
 			skippedExisting = true
 		}
 		for _, issue := range issues {
