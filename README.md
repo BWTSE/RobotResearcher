@@ -2,11 +2,10 @@
 
 [![DOI](https://zenodo.org/badge/310341044.svg)](https://zenodo.org/badge/latestdoi/310341044)
 
-This is the research tool built for and used in the thesis [*The Broken Windows Theory in Software Engineering: An experiment on technical debt propagation*](https://doi.org/10.5281/zenodo.4812956) conducted by [Hampus Broman](https://github.com/HBroman) and [William Levén](https://github.com/williamleven) in 2021.
+This is the research tool built for and used to investigate the Broken Windows Theory in Software Engineering
 
 Check out the [demo](https://bwtse.github.io/RobotResearcher/index.html)!
 
-Read the thesis for more information about how the tool was used.
 
 ## Notes
 
