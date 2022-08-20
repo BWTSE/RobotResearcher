@@ -18,10 +18,10 @@
             The experiment aims to investigate the evolution of software projects by asking the participants to complete tasks in preexisting projects. There will be two (2) tasks to be performed followed by a short survey. You will also be asked to answer some background questions before you start. Your participation is voluntary and you are free to drop out of the experiment at any time.
             <strong>We do greatly appreciate if you complete the whole experiment</strong> so that we may acquire some useful results.
           </p>
-          <p>
+          <p v-if="!$demoMode">
             This experiment is part of a master thesis by William Leven (<a target="_blank" href="mailto:william@leven.id">william@leven.id</a>) and Hampus Broman (<a target="_blank" href="mailto:bromanh@student.chalmers.se">bromanh@student.chalmers.se</a>) studying at the Software Engineering master program at Chalmers University. The supervisors are Terese Besker and Richard Torkar.
           </p>
-          <p><!-- Also in Farewell.vue -->
+          <p v-if="!$demoMode"><!-- Also in Farewell.vue -->
             If you want to receive a copy of the thesis after its completion you may provide your email at: <a v-if="!$demoMode" target="_blank" href="https://forms.gle/WJ3kXBfBYjCV35E89">https://forms.gle/WJ3kXBfBYjCV35E89</a><span v-else>DEMO MODE</span>
           </p>
           <v-divider />

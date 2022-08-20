@@ -8,7 +8,7 @@
       <v-card-title>Thank you for participating!</v-card-title>
       <v-card-text>
         <p>
-          If you want to receive a copy of the completed thesis or want to participate in a short follow up interview you can use the form bellow.
+          If you want to receive a copy of the completed study or want to participate in a short follow up interview you can use the form bellow.
         </p>
       </v-card-text>
       <hr>
